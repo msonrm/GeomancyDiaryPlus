@@ -48,51 +48,15 @@
             color: #8b7355;
         }
 
-        .instructions {
-            background: rgba(255,255,255,0.7);
-            padding: 16px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            font-size: 14px;
-            line-height: 1.6;
-            color: rgba(93,78,55,0.9);
-        }
-
-        .progress-indicator {
-            text-align: center;
-            margin-bottom: 16px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #5d4e37;
-        }
-
-        .progress-dots {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .progress-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(139,115,85,0.3);
-            transition: all 0.3s ease;
-        }
-
-        .progress-dot.completed {
-            background: #8b7355;
-        }
-
         .canvas-container {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 600px;
+            margin: 0 auto;
             position: relative;
-            background: rgba(255,255,255,0.6);
+            background: rgba(255,255,255,0.3);
             border-radius: 12px;
-            overflow: hidden;
             touch-action: none;
-            flex: 1;
-            min-height: 400px;
         }
 
         #stones-canvas {
@@ -100,31 +64,74 @@
             width: 100%;
             height: 100%;
             cursor: crosshair;
-        }
-
-        .result-display {
-            text-align: center;
-            margin-top: 16px;
-            padding: 12px;
-            background: rgba(255,255,255,0.7);
             border-radius: 12px;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        .result-text {
-            font-size: 18px;
+        .dice-results {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .dice-result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dice-result-box {
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
+            padding: 12px;
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dice-result-box.fire {
+            border-color: #ffaaaa;
+            background: #ffdddd;
+        }
+
+        .dice-result-box.air {
+            border-color: #ffffaa;
+            background: #ffffdd;
+        }
+
+        .dice-result-box.water {
+            border-color: #aaccff;
+            background: #ddeeff;
+        }
+
+        .dice-result-box.earth {
+            border-color: #aaffaa;
+            background: #ddffdd;
+        }
+
+        .element-label {
+            font-size: 11px;
+            color: rgba(93,78,55,0.8);
             font-weight: 600;
+        }
+
+        .dice-value {
+            font-size: 20px;
+            font-weight: bold;
             color: #5d4e37;
         }
 
-        .result-number {
-            font-size: 24px;
-            font-weight: bold;
-            color: #8b7355;
-            margin: 0 8px;
+        .dice-value.empty {
+            color: rgba(93,78,55,0.3);
+            font-size: 16px;
         }
 
         .symbol-dialog {
@@ -183,36 +190,28 @@
         .close-button {
             background: none;
             border: none;
-            font-size: 24px;
-            color: #8b7355;
+            font-size: 28px;
+            color: #5d4e37;
             cursor: pointer;
+            padding: 0;
+            line-height: 1;
             width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 50%;
-            transition: all 0.2s ease;
-        }
-
-        .close-button:hover {
-            background: rgba(139,115,85,0.1);
-            color: #5d4e37;
         }
 
         .symbol-image-area {
-            text-align: center;
+            display: flex;
+            justify-content: center;
             margin-bottom: 20px;
-            padding: 20px;
-            background: rgba(255,255,255,0.5);
-            border-radius: 8px;
-            border: 1px solid rgba(139,115,85,0.2);
         }
 
         .symbol-image {
-            max-width: 100%;
-            height: auto;
-            max-height: 200px;
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
         }
 
         .symbol-name {
@@ -258,26 +257,43 @@
     <div class="container">
         <button class="back-button" onclick="goBack()">← 戻る</button>
         
-        <div class="instructions">
-            画面上のさざれ石を指でなぞって囲んでください。閉じた線を4回描くことで、シンボルが決まります。囲んだ石の数が偶数か奇数かで判定されます。
-        </div>
-
-        <div class="progress-indicator">
-            <div>囲んだ回数: <span id="round-count">0</span> / 4</div>
-            <div class="progress-dots">
-                <div class="progress-dot" id="progress-0"></div>
-                <div class="progress-dot" id="progress-1"></div>
-                <div class="progress-dot" id="progress-2"></div>
-                <div class="progress-dot" id="progress-3"></div>
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <div class="canvas-container">
+                <canvas id="stones-canvas"></canvas>
             </div>
-        </div>
-
-        <div class="canvas-container">
-            <canvas id="stones-canvas"></canvas>
-        </div>
-
-        <div class="result-display">
-            <span class="result-text" id="result-text">石を囲んで線を閉じてください</span>
+            
+            <div style="padding: 16px 20px 20px 20px; text-align: center;">
+                <p style="color: rgba(93,78,55,0.7); font-size: 14px; margin-bottom: 16px; line-height: 1.4;">
+                    どんなことを占いたいのかを強く心に思いながら、画面上のさざれ石を指でなぞって囲んでください。閉じた線を4回描くことで、ジオマンシーのシンボルが決まります。囲んだ石の数が偶数か奇数かで判定されます。
+                </p>
+                
+                <div class="dice-results">
+                    <div class="dice-result-container">
+                        <div class="dice-result-box fire">
+                            <span class="dice-value empty" id="result-fire">-</span>
+                        </div>
+                        <span class="element-label">火</span>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box air">
+                            <span class="dice-value empty" id="result-air">-</span>
+                        </div>
+                        <span class="element-label">風</span>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box water">
+                            <span class="dice-value empty" id="result-water">-</span>
+                        </div>
+                        <span class="element-label">水</span>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box earth">
+                            <span class="dice-value empty" id="result-earth">-</span>
+                        </div>
+                        <span class="element-label">地</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -292,18 +308,14 @@
                 <img class="symbol-image" id="symbol-image" src="" alt="シンボル">
             </div>
             
-            <div class="symbol-name" id="symbol-name">
-                Fortuna Minor（小吉）
-            </div>
+            <div class="symbol-name" id="symbol-name"></div>
             
             <div class="symbol-attributes">
-                <div class="symbol-attribute" id="symbol-yesno">Yes/No: イエス</div>
-                <div class="symbol-attribute" id="symbol-fortune">吉凶: 小吉</div>
+                <div class="symbol-attribute" id="symbol-yesno"></div>
+                <div class="symbol-attribute" id="symbol-fortune"></div>
             </div>
             
-            <div class="symbol-meaning" id="symbol-meaning">
-                小さく一時的な幸運、ささやかな幸せ。周りからの援助。
-            </div>
+            <div class="symbol-meaning" id="symbol-meaning"></div>
         </div>
     </div>
 
@@ -317,8 +329,8 @@
         let completedRounds = [];
         let currentRoundResult = null;
         
-        const STONE_RADIUS = 3;
-        const STONE_COUNT = 100;
+        const STONE_RADIUS = 4;
+        const STONE_COUNT = 50;
         const CLOSE_THRESHOLD = 30;
         const MIN_PATH_LENGTH = 20;
 
@@ -349,16 +361,14 @@
             const container = canvas.parentElement;
             canvas.width = container.clientWidth;
             canvas.height = container.clientHeight;
-            redraw();
         }
 
         function initStones() {
             stones = [];
-            const margin = 30;
             for (let i = 0; i < STONE_COUNT; i++) {
                 stones.push({
-                    x: margin + Math.random() * (canvas.width - margin * 2),
-                    y: margin + Math.random() * (canvas.height - margin * 2)
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height
                 });
             }
         }
@@ -366,7 +376,6 @@
         function redraw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // さざれ石を描画
             stones.forEach(stone => {
                 ctx.fillStyle = '#8b7355';
                 ctx.beginPath();
@@ -374,7 +383,6 @@
                 ctx.fill();
             });
             
-            // 現在描いている線を描画
             if (currentPath.length > 0) {
                 ctx.strokeStyle = '#5d4e37';
                 ctx.lineWidth = 2;
@@ -387,13 +395,21 @@
                 }
                 ctx.stroke();
                 
-                // 始点に近い場合、閉じる予告線を描画
                 if (currentPath.length > MIN_PATH_LENGTH) {
                     const startPoint = currentPath[0];
                     const endPoint = currentPath[currentPath.length - 1];
                     const distance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
                     
                     if (distance < CLOSE_THRESHOLD) {
+                        ctx.fillStyle = 'rgba(139,115,85,0.08)';
+                        ctx.beginPath();
+                        ctx.moveTo(currentPath[0].x, currentPath[0].y);
+                        for (let i = 1; i < currentPath.length; i++) {
+                            ctx.lineTo(currentPath[i].x, currentPath[i].y);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        
                         ctx.strokeStyle = 'rgba(139,115,85,0.5)';
                         ctx.setLineDash([5, 5]);
                         ctx.beginPath();
@@ -405,11 +421,9 @@
                 }
             }
             
-            // 確定した領域をハイライト
             if (currentRoundResult && currentRoundResult.path) {
                 const path = currentRoundResult.path;
                 
-                // 塗りつぶし
                 ctx.fillStyle = 'rgba(139,115,85,0.15)';
                 ctx.beginPath();
                 ctx.moveTo(path[0].x, path[0].y);
@@ -419,12 +433,10 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // 線の描画
                 ctx.strokeStyle = '#8b7355';
                 ctx.lineWidth = 3;
                 ctx.stroke();
                 
-                // 囲まれた石を強調表示
                 currentRoundResult.enclosedStones.forEach(stone => {
                     ctx.fillStyle = '#d4a574';
                     ctx.beginPath();
@@ -449,7 +461,6 @@
             const pos = getPointerPos(e);
             currentPath = [pos];
             currentRoundResult = null;
-            updateResultDisplay('線を描いています...');
         }
 
         function draw(e) {
@@ -459,56 +470,36 @@
             const pos = getPointerPos(e);
             currentPath.push(pos);
             
-            // 交差をチェック（リアルタイム）
             if (currentPath.length > MIN_PATH_LENGTH) {
                 const intersection = checkLastSegmentIntersection(currentPath);
                 
                 if (intersection.intersects) {
-                    // 交差が発生したら即座に閉曲線を確定
                     const newPath = [];
-                    
-                    // 交差点を追加
                     newPath.push(intersection.point);
                     
-                    // 交差点から交差点まで（ループ部分）
                     for (let i = intersection.index1 + 1; i <= intersection.index2; i++) {
                         newPath.push(currentPath[i]);
                     }
                     
-                    // 交差点に戻る
                     newPath.push(intersection.point);
                     
                     currentPath = newPath;
-                    isDrawing = false; // 描画終了
+                    isDrawing = false;
                     countEnclosedStones();
                     return;
                 }
             }
             
             redraw();
-            
-            // 始点に近づいたかチェック
-            if (currentPath.length > MIN_PATH_LENGTH) {
-                const startPoint = currentPath[0];
-                const distance = Math.hypot(pos.x - startPoint.x, pos.y - startPoint.y);
-                
-                if (distance < CLOSE_THRESHOLD) {
-                    updateResultDisplay('指を離すと確定します');
-                } else {
-                    updateResultDisplay('線を描いています');
-                }
-            }
         }
 
         function checkLastSegmentIntersection(path) {
-            // 最後に追加されたセグメントが既存のセグメントと交差するかチェック
             const lastIndex = path.length - 1;
             if (lastIndex < 3) return { intersects: false };
             
             const lastSegmentStart = path[lastIndex - 1];
             const lastSegmentEnd = path[lastIndex];
             
-            // 最後のセグメント以外の全セグメントとチェック
             for (let i = 0; i < lastIndex - 2; i++) {
                 if (lineSegmentsIntersect(
                     lastSegmentStart, lastSegmentEnd,
@@ -554,56 +545,6 @@
             };
         }
 
-        function getAllIntersections(path) {
-            // すべての交差点を見つける
-            const intersections = [];
-            
-            for (let i = 0; i < path.length - 1; i++) {
-                for (let j = i + 2; j < path.length - 1; j++) {
-                    // 隣接するセグメントは除外
-                    if (Math.abs(i - j) <= 1) continue;
-                    
-                    if (lineSegmentsIntersect(path[i], path[i + 1], path[j], path[j + 1])) {
-                        const intersectionPoint = getIntersectionPoint(
-                            path[i], path[i + 1], 
-                            path[j], path[j + 1]
-                        );
-                        intersections.push({ 
-                            index1: i, 
-                            index2: j,
-                            point: intersectionPoint
-                        });
-                    }
-                }
-            }
-            
-            if (intersections.length === 0) {
-                return { intersects: false };
-            } else if (intersections.length === 1) {
-                return { 
-                    intersects: true, 
-                    first: intersections[0],
-                    last: intersections[0]
-                };
-            } else {
-                // 複数ある場合
-                // 始点に最も近い交差点 = index1が最小
-                const first = intersections.reduce((min, curr) => 
-                    curr.index1 < min.index1 ? curr : min
-                );
-                // 終点に最も近い交差点 = index2が最大
-                const last = intersections.reduce((max, curr) => 
-                    curr.index2 > max.index2 ? curr : max
-                );
-                
-                return { 
-                    intersects: true, 
-                    first: first,
-                    last: last
-                };
-            }
-        }
-
         function endDrawing(e) {
             if (!isDrawing) return;
             e.preventDefault();
@@ -614,19 +555,15 @@
                 const endPoint = currentPath[currentPath.length - 1];
                 const distance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
                 
-                // 始点と終点が近い場合のみ閉じる（交差は描画中に処理済み）
                 if (distance < CLOSE_THRESHOLD) {
-                    currentPath.push(startPoint); // 始点に戻る
+                    currentPath.push(startPoint);
                     countEnclosedStones();
                 } else {
-                    // 閉じていない場合はエラー
                     currentPath = [];
-                    updateResultDisplay('線が閉じませんでした。もう一度試してください');
                     redraw();
                 }
             } else {
                 currentPath = [];
-                updateResultDisplay('線が短すぎます。もう一度試してください');
                 redraw();
             }
         }
@@ -648,11 +585,9 @@
             const enclosedStones = stones.filter(stone => isPointInPolygon(stone, currentPath));
             const count = enclosedStones.length;
             
-            // 石が1つも囲まれていない場合は無効
             if (count === 0) {
                 currentPath = [];
                 currentRoundResult = null;
-                updateResultDisplay('石が囲まれていません。もう一度試してください');
                 redraw();
                 return;
             }
@@ -667,95 +602,154 @@
             };
             
             completedRounds.push(parity);
-            updateProgress();
-            
-            const parityText = parity === 2 ? '偶数' : '奇数';
-            updateResultDisplay(`<span class="result-number">${count}</span>個の石を囲みました（${parityText}）`);
             
             redraw();
             
-            // 4回完了したらシンボル表示
-            if (completedRounds.length === 4) {
-                setTimeout(() => {
-                    showSymbolDialog();
-                }, 1500);
-            } else {
-                setTimeout(() => {
-                    currentPath = [];
-                    currentRoundResult = null;
-                    updateResultDisplay('次の領域を囲んでください');
-                    redraw();
-                }, 2000);
-            }
+            // 石を2つずつ線で結ぶアニメーション
+            animatePairing(enclosedStones, () => {
+                // アニメーション完了後に結果を表示
+                updateResults();
+                
+                if (completedRounds.length === 4) {
+                    setTimeout(() => {
+                        showSymbolDialog();
+                    }, 800);
+                } else {
+                    setTimeout(() => {
+                        currentPath = [];
+                        currentRoundResult = null;
+                        redraw();
+                    }, 1500);
+                }
+            });
         }
 
-        function updateProgress() {
-            document.getElementById('round-count').textContent = completedRounds.length;
-            for (let i = 0; i < 4; i++) {
-                const dot = document.getElementById(`progress-${i}`);
+        function animatePairing(enclosedStones, callback) {
+            // 渦巻き状にソート：左→下→右→上の順で外側から中心へ
+            const sortedStones = sortSpiralInward([...enclosedStones]);
+            
+            let pairIndex = 0;
+            const totalPairs = Math.floor(sortedStones.length / 2);
+            
+            function drawNextPair() {
+                if (pairIndex >= totalPairs) {
+                    if (callback) setTimeout(callback, 300);
+                    return;
+                }
+                
+                const stone1 = sortedStones[pairIndex * 2];
+                const stone2 = sortedStones[pairIndex * 2 + 1];
+                
+                // 線を描画（one-oracle-dotsと同じスタイル）
+                ctx.strokeStyle = '#8b7355';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(stone1.x, stone1.y);
+                ctx.lineTo(stone2.x, stone2.y);
+                ctx.stroke();
+                
+                pairIndex++;
+                setTimeout(drawNextPair, 100);
+            }
+            
+            drawNextPair();
+        }
+
+        function sortSpiralInward(stones) {
+            const result = [];
+            let remaining = [...stones];
+            let direction = 0; // 0:左, 1:上, 2:右, 3:下
+            
+            while (remaining.length > 0) {
+                // 各方向でソート
+                switch (direction % 4) {
+                    case 0: // X座標が小さい順（左）
+                        remaining.sort((a, b) => a.x - b.x);
+                        break;
+                    case 1: // Y座標が小さい順（上）
+                        remaining.sort((a, b) => a.y - b.y);
+                        break;
+                    case 2: // X座標が大きい順（右）
+                        remaining.sort((a, b) => b.x - a.x);
+                        break;
+                    case 3: // Y座標が大きい順（下）
+                        remaining.sort((a, b) => b.y - a.y);
+                        break;
+                }
+                
+                // 先頭から2点を取り出す（1点しかない場合は1点）
+                const count = Math.min(2, remaining.length);
+                for (let i = 0; i < count; i++) {
+                    result.push(remaining.shift());
+                }
+                
+                direction++;
+            }
+            
+            return result;
+        }
+
+        function updateResults() {
+            const elements = ['fire', 'air', 'water', 'earth'];
+            for (let i = 0; i < elements.length; i++) {
+                const resultElement = document.getElementById(`result-${elements[i]}`);
                 if (i < completedRounds.length) {
-                    dot.classList.add('completed');
+                    resultElement.textContent = completedRounds[i];
+                    resultElement.classList.remove('empty');
                 } else {
-                    dot.classList.remove('completed');
+                    resultElement.textContent = '-';
+                    resultElement.classList.add('empty');
                 }
             }
         }
 
-        function updateResultDisplay(html) {
-            document.getElementById('result-text').innerHTML = html;
-        }
-
         function showSymbolDialog() {
-            const pattern = completedRounds.join('');
-            let symbol = geomancySymbols[pattern];
-            if (!symbol) {
-                const keys = Object.keys(geomancySymbols);
-                symbol = geomancySymbols[keys[0]];
-            }
+            const symbolKey = completedRounds.join('');
+            const symbol = geomancySymbols[symbolKey];
             
-            const img = new Image();
-            img.onload = () => {
-                document.getElementById('symbol-image').src = `${pattern}.png`;
+            if (symbol) {
                 document.getElementById('symbol-name').textContent = symbol.name;
                 document.getElementById('symbol-yesno').textContent = `Yes/No: ${symbol.yesno}`;
                 document.getElementById('symbol-fortune').textContent = `吉凶: ${symbol.fortune}`;
                 document.getElementById('symbol-meaning').textContent = symbol.meaning;
                 
-                document.getElementById('symbolDialog').classList.add('show');
-            };
-            img.src = `${pattern}.png`;
+                const imageMap = {
+                    '2222': 'populus', '1111': 'via', '2112': 'conjunctio', '1221': 'carcer',
+                    '2211': 'fortuna_major', '1122': 'fortuna_minor', '2121': 'acquisitio', '1212': 'amissio',
+                    '1222': 'laetitia', '2221': 'tristitia', '1211': 'puella', '1121': 'puer',
+                    '2212': 'albus', '2122': 'rubeus', '2111': 'caput_draconis', '1112': 'cauda_draconis'
+                };
+                
+                document.getElementById('symbol-image').src = `images/${imageMap[symbolKey]}.png`;
+            }
+            
+            document.getElementById('symbolDialog').classList.add('show');
         }
 
         function closeSymbolDialog() {
             document.getElementById('symbolDialog').classList.remove('show');
-            setTimeout(() => {
-                resetGame();
-            }, 300);
-        }
-
-        function resetGame() {
+            
             completedRounds = [];
             currentPath = [];
             currentRoundResult = null;
-            updateProgress();
-            updateResultDisplay('石を囲んで線を閉じてください');
+            updateResults();
             initStones();
             redraw();
         }
 
-        // イベントリスナー
         canvas.addEventListener('mousedown', startDrawing);
         canvas.addEventListener('mousemove', draw);
         canvas.addEventListener('mouseup', endDrawing);
-        canvas.addEventListener('mouseleave', endDrawing);
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', endDrawing);
 
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', endDrawing, { passive: false });
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            redraw();
+        });
 
-        window.addEventListener('resize', resizeCanvas);
-
-        // 初期化
         document.addEventListener('DOMContentLoaded', function() {
             if ('scrollRestoration' in history) {
                 history.scrollRestoration = 'manual';
