@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワンオラクル（ドット）- ジオマンシー占い</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #e8dcc6 0%, #d4c4a8 100%);
+            min-height: 100vh;
+            color: #5d4e37;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #5d4e37;
+            padding: 16px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .back-button:hover {
+            color: #8b7355;
+        }
+
+        .dot-zones {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            margin: 0;
+            border: none;
+            border-radius: 0;
+            overflow: hidden;
+            flex: 1;
+        }
+
+        .dot-zone {
+            background: rgba(255,255,255,0.6);
+            border-bottom: 1px solid rgba(93,78,55,0.3);
+            min-height: 100px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            width: 100%;
+        }
+
+        .dot-zone:last-child {
+            border-bottom: none;
+        }
+
+        .dots-display {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            min-height: 100px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #8b7355;
+            border-radius: 50%;
+            position: absolute;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .zone-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .generate-button {
+            background: rgba(93,78,55,0.3);
+            border: none;
+            color: #5d4e37;
+            padding: 16px 32px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: not-allowed;
+            margin: 20px auto;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+        }
+
+        .generate-button.active {
+            background: #8b7355;
+            color: white;
+            cursor: pointer;
+            opacity: 1;
+        }
+
+        .generate-button.active:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(139,115,85,0.3);
+        }
+
+        .symbol-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .symbol-dialog.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .symbol-content {
+            background: #f5f0e8;
+            border: 2px solid #8b7355;
+            border-radius: 12px;
+            width: calc(100% - 40px);
+            max-width: 400px;
+            position: relative;
+            padding: 24px;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .symbol-dialog.show .symbol-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .symbol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .symbol-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #5d4e37;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #8b7355;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(139,115,85,0.1);
+            color: #5d4e37;
+        }
+
+        .symbol-image-area {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(139,115,85,0.2);
+        }
+
+        .symbol-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
+        }
+
+        .symbol-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #5d4e37;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .symbol-attributes {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .symbol-attribute {
+            background: rgba(139,115,85,0.1);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #5d4e37;
+            font-weight: 500;
+        }
+
+        .symbol-meaning {
+            font-size: 15px;
+            color: #5d4e37;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="goBack()">← 戻る</button>
+        
+        <div class="dot-zones">
+            <div class="dot-zone" onclick="tapZone(event, 0)" ontouchstart="handleTouch(event, 0)">
+                <div class="dots-display" id="zone-0">
+                    <canvas class="zone-canvas" id="canvas-0"></canvas>
+                </div>
+            </div>
+            <div class="dot-zone" onclick="tapZone(event, 1)" ontouchstart="handleTouch(event, 1)">
+                <div class="dots-display" id="zone-1">
+                    <canvas class="zone-canvas" id="canvas-1"></canvas>
+                </div>
+            </div>
+            <div class="dot-zone" onclick="tapZone(event, 2)" ontouchstart="handleTouch(event, 2)">
+                <div class="dots-display" id="zone-2">
+                    <canvas class="zone-canvas" id="canvas-2"></canvas>
+                </div>
+            </div>
+            <div class="dot-zone" onclick="tapZone(event, 3)" ontouchstart="handleTouch(event, 3)">
+                <div class="dots-display" id="zone-3">
+                    <canvas class="zone-canvas" id="canvas-3"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 16px 20px 20px 20px; text-align: center;">
+            <p style="color: rgba(93,78,55,0.7); font-size: 14px; margin-bottom: 16px; line-height: 1.4;">
+                どんなことを占いたいのかを強く心に思いながら、4つの領域を右から左に向かってタップしていき、思いのままにドットを打ってください。4つすべてにドットが打たれたら「シンボルを生成」ボタンを押してください。ドットの個数（偶数・奇数）に応じてジオマンシーのシンボルが決まります。
+            </p>
+            <button class="generate-button" id="generate-btn" onclick="generateSymbol()">
+                シンボルを生成
+            </button>
+        </div>
+    </div>
+
+    <div class="symbol-dialog" id="symbolDialog">
+        <div class="symbol-content">
+            <div class="symbol-header">
+                <h3>ワンオラクル結果</h3>
+                <button class="close-button" onclick="closeSymbolDialog()">×</button>
+            </div>
+            
+            <div class="symbol-image-area">
+                <img class="symbol-image" id="symbol-image" src="" alt="シンボル">
+            </div>
+            
+            <div class="symbol-name" id="symbol-name">
+                Fortuna Minor（小吉）
+            </div>
+            
+            <div class="symbol-attributes">
+                <div class="symbol-attribute" id="symbol-yesno">Yes/No: イエス</div>
+                <div class="symbol-attribute" id="symbol-fortune">吉凶: 小吉</div>
+            </div>
+            
+            <div class="symbol-meaning" id="symbol-meaning">
+                小さく一時的な幸運、ささやかな幸せ。周りからの援助。
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let zoneDots = [[], [], [], []];
+        let isGenerating = false;
+
+        const geomancySymbols = {
+            '2222': { name: 'Populus（人々）', meaning: '物事や人が多数ある状態。受け身。安定。', yesno: 'イエス', fortune: '吉' },
+            '1111': { name: 'Via（道）', meaning: '変化、動くこと、過程。決断。積極性、能動性。', yesno: 'ノー', fortune: '吉でも凶でもない。旅や移動について吉' },
+            '2112': { name: 'Conjunctio（つながり）', meaning: '違う者同士結びつく、目的を持って集まる、縁が生まれる。失せ物が見つかる。', yesno: 'イエス', fortune: '吉と凶の両方' },
+            '1221': { name: 'Carcer（拘束）', meaning: '孤独、身動きが取れない、ひきこもり。困滞、現状維持。', yesno: 'ノー', fortune: '凶。セキュリティに関しては吉' },
+            '2211': { name: 'Fortuna Major（大吉）', meaning: '大きな幸運。自分の思い通りにことが運ぶ。', yesno: 'イエス', fortune: '大吉' },
+            '1122': { name: 'Fortuna Minor（小吉）', meaning: '小さく一時的な幸運、ささやかな幸せ。周りからの援助。', yesno: 'イエス', fortune: '小吉' },
+            '2121': { name: 'Acquisitio（獲得）', meaning: '収穫、利益。願いが叶う。何かを受け取る、受け入れる。', yesno: 'イエス', fortune: '吉' },
+            '1212': { name: 'Amissio（喪失）', meaning: '損失、愛情や金銭などを失う。病気やトラブル、悪癖がなくなる。', yesno: 'ノー', fortune: '凶' },
+            '1222': { name: 'Laetitia（喜び）', meaning: '喜ばしいこと、笑い、成功。音楽や踊り。髭のある男性。', yesno: 'イエス', fortune: '吉' },
+            '2221': { name: 'Tristitia（悲しみ）', meaning: '不幸、受難、宿命。', yesno: 'ノー', fortune: '凶。占いや魔術に関しては吉' },
+            '1211': { name: 'Puella（少女）', meaning: '女性らしさ、美しさ。ときめき、嬉しさ。目先の楽しみ。', yesno: 'イエス', fortune: '吉' },
+            '1121': { name: 'Puer（少年）', meaning: '男性らしさ、力強さ、未熟さ。未来を切り開く。', yesno: 'ノー', fortune: '凶。争い事には吉' },
+            '2212': { name: 'Albus（白）', meaning: '公正、高潔さ、正義。片思いやプラトニック・ラブ。', yesno: 'イエス', fortune: '吉' },
+            '2122': { name: 'Rubeus（赤）', meaning: '争い事、闘争心。悪いことには吉、良いことには凶。', yesno: 'ノー', fortune: '凶' },
+            '2111': { name: 'Caput Draconis（竜の頭）', meaning: '始まり、新しい扉が開く、前例のない課題に取り組む。やりすぎの傾向。', yesno: 'イエス', fortune: '吉凶入り混じる。何かを始めるには吉' },
+            '1112': { name: 'Cauda Draconis（竜の尾）', meaning: '終わり、物事の完成、途絶。吉は凶となり、凶は吉となる。', yesno: 'ノー', fortune: '吉でも凶でもない。何かを終わらせるには吉' }
+        };
+
+        function goBack() {
+            // 実際のアプリではindex.htmlに戻る
+            window.history.back();
+        }
+
+        function tapZone(event, zoneIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            const zoneElement = document.getElementById(`zone-${zoneIndex}`);
+            const rect = zoneElement.getBoundingClientRect();
+            const x = ((event.clientX - rect.left) / rect.width) * 100;
+            const y = ((event.clientY - rect.top) / rect.height) * 100;
+            addDot(zoneIndex, x, y);
+        }
+
+        function handleTouch(event, zoneIndex) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (event.touches && event.touches.length > 0) {
+                const touch = event.touches[0];
+                const zoneElement = document.getElementById(`zone-${zoneIndex}`);
+                const rect = zoneElement.getBoundingClientRect();
+                const x = ((touch.clientX - rect.left) / rect.width) * 100;
+                const y = ((touch.clientY - rect.top) / rect.height) * 100;
+                addDot(zoneIndex, x, y);
+            }
+        }
+
+        function addDot(zoneIndex, x, y) {
+            if (isGenerating) return;
+            if (x < 0 || x > 100 || y < 0 || y > 100) return;
+            
+            const bufferSize = 8;
+            let adjustedY = y;
+            
+            if (y < bufferSize && zoneIndex > 0) {
+                adjustedY = bufferSize + 2;
+            } else if (y > (100 - bufferSize) && zoneIndex < 3) {
+                adjustedY = 100 - bufferSize - 2;
+            }
+            
+            zoneDots[zoneIndex].push({ x, y: adjustedY });
+            const zoneElement = document.getElementById(`zone-${zoneIndex}`);
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = `${x}%`;
+            dot.style.top = `${adjustedY}%`;
+            zoneElement.appendChild(dot);
+            const canvas = document.getElementById(`canvas-${zoneIndex}`);
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            updateGenerateButton();
+        }
+
+        function updateGenerateButton() {
+            if (isGenerating) return;
+            const generateBtn = document.getElementById('generate-btn');
+            const allZonesHaveDots = zoneDots.every(zone => zone.length > 0);
+            if (allZonesHaveDots) {
+                generateBtn.classList.add('active');
+            } else {
+                generateBtn.classList.remove('active');
+            }
+        }
+
+        function generateSymbol() {
+            const generateBtn = document.getElementById('generate-btn');
+            if (!generateBtn.classList.contains('active') || isGenerating) return;
+            
+            document.getElementById('symbol-image').src = '';
+            isGenerating = true;
+            generateBtn.classList.remove('active');
+            generateBtn.textContent = '生成中...';
+            
+            for (let i = 0; i < 4; i++) {
+                animatePairing(i);
+            }
+            
+            setTimeout(() => { showSymbolDialog(); }, 2000);
+        }
+
+        function showSymbolDialog() {
+            const pattern = zoneDots.map(zone => zone.length % 2 === 0 ? '2' : '1').join('');
+            let symbol = geomancySymbols[pattern];
+            if (!symbol) {
+                const keys = Object.keys(geomancySymbols);
+                symbol = geomancySymbols[keys[0]];
+            }
+            
+            // 画像をプリロードしてから表示（実際のアプリでは画像パスを調整）
+            const imgSrc = `https://via.placeholder.com/200x200/8b7355/ffffff?text=${encodeURIComponent(symbol.name)}`;
+            const img = new Image();
+            img.onload = () => {
+                document.getElementById('symbol-image').src = imgSrc;
+                document.getElementById('symbol-name').textContent = symbol.name;
+                document.getElementById('symbol-yesno').textContent = `Yes/No: ${symbol.yesno}`;
+                document.getElementById('symbol-fortune').textContent = `吉凶: ${symbol.fortune}`;
+                document.getElementById('symbol-meaning').textContent = symbol.meaning;
+                
+                document.getElementById('symbolDialog').classList.add('show');
+            };
+            img.src = imgSrc;
+        }
+
+        function closeSymbolDialog() {
+            document.getElementById('symbolDialog').classList.remove('show');
+            setTimeout(() => {
+                resetDotOracle();
+                isGenerating = false;
+                document.getElementById('generate-btn').textContent = 'シンボルを生成';
+            }, 300);
+        }
+
+        function resetDotOracle() {
+            zoneDots = [[], [], [], []];
+            for (let i = 0; i < 4; i++) {
+                const zoneElement = document.getElementById(`zone-${i}`);
+                const dots = zoneElement.querySelectorAll('.dot');
+                dots.forEach(dot => dot.remove());
+                const canvas = document.getElementById(`canvas-${i}`);
+                const ctx = canvas.getContext('2d');
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            updateGenerateButton();
+        }
+
+        function animatePairing(zoneIndex) {
+            const zoneElement = document.getElementById(`zone-${zoneIndex}`);
+            const canvas = document.getElementById(`canvas-${zoneIndex}`);
+            const ctx = canvas.getContext('2d');
+            const dots = zoneElement.querySelectorAll('.dot');
+            const dotCoords = zoneDots[zoneIndex];
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            for (let i = 0; i < dots.length; i += 2) {
+                setTimeout(() => {
+                    if (i + 1 < dots.length) {
+                        const x1 = (dotCoords[i].x / 100) * canvas.width;
+                        const y1 = (dotCoords[i].y / 100) * canvas.height;
+                        const x2 = (dotCoords[i + 1].x / 100) * canvas.width;
+                        const y2 = (dotCoords[i + 1].y / 100) * canvas.height;
+                        ctx.strokeStyle = '#8b7355';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                    }
+                }, i * 100);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            window.scrollTo(0, 0);
+        });
+
+        document.addEventListener('touchstart', function() {}, {passive: true});
+    </script>
+</body>
+</html>
