@@ -377,18 +377,44 @@
 
         function initStones() {
             stones = [];
+            const MIN_DISTANCE = STONE_RADIUS * 5; // 石の半径の5倍 = 20px
+            const MAX_ATTEMPTS = 50; // 各石の配置試行回数の上限
+            
             for (let i = 0; i < STONE_COUNT; i++) {
-                stones.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height
-                });
+                let attempts = 0;
+                let newStone = null;
+                let validPosition = false;
+                
+                while (!validPosition && attempts < MAX_ATTEMPTS) {
+                    // ランダムな位置を生成
+                    newStone = {
+                        x: STONE_RADIUS + Math.random() * (canvas.width - STONE_RADIUS * 2),
+                        y: STONE_RADIUS + Math.random() * (canvas.height - STONE_RADIUS * 2)
+                    };
+                    
+                    // 既存の石との距離をチェック
+                    validPosition = true;
+                    for (let j = 0; j < stones.length; j++) {
+                        const distance = Math.hypot(newStone.x - stones[j].x, newStone.y - stones[j].y);
+                        if (distance < MIN_DISTANCE) {
+                            validPosition = false;
+                            break;
+                        }
+                    }
+                    
+                    attempts++;
+                }
+                
+                // MAX_ATTEMPTSに達した場合でも石を配置（無限ループ防止）
+                if (newStone) {
+                    stones.push(newStone);
+                }
             }
         }
 
         function redraw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            // 通常の石を描画
             stones.forEach(stone => {
                 ctx.fillStyle = '#8b7355';
                 ctx.beginPath();
@@ -396,7 +422,6 @@
                 ctx.fill();
             });
             
-            // 現在描画中のパスを描画
             if (currentPath.length > 0) {
                 ctx.strokeStyle = '#5d4e37';
                 ctx.lineWidth = 2;
@@ -409,7 +434,6 @@
                 }
                 ctx.stroke();
                 
-                // 閉じる準備ができているかのヒント表示
                 if (currentPath.length > MIN_PATH_LENGTH) {
                     const startPoint = currentPath[0];
                     const endPoint = currentPath[currentPath.length - 1];
@@ -436,11 +460,9 @@
                 }
             }
             
-            // 完了した領域の表示（ペアリング線を描画する前の状態）
             if (currentRoundResult && currentRoundResult.path) {
                 const path = currentRoundResult.path;
                 
-                // 囲まれた領域の背景
                 ctx.fillStyle = 'rgba(139,115,85,0.15)';
                 ctx.beginPath();
                 ctx.moveTo(path[0].x, path[0].y);
@@ -450,7 +472,6 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                // 囲み線
                 ctx.strokeStyle = '#8b7355';
                 ctx.lineWidth = 3;
                 ctx.stroke();
@@ -481,12 +502,10 @@
             const pos = getPointerPos(e);
             currentPath.push(pos);
             
-            // 自己交差のチェック
             if (currentPath.length > MIN_PATH_LENGTH) {
                 const intersection = checkLastSegmentIntersection(currentPath);
                 
                 if (intersection.intersects) {
-                    // 交差点で閉じたパスを作成
                     const newPath = [];
                     newPath.push(intersection.point);
                     
@@ -513,7 +532,6 @@
             const lastSegmentStart = path[lastIndex - 1];
             const lastSegmentEnd = path[lastIndex];
             
-            // 最後の線分と他の線分との交差をチェック
             for (let i = 0; i < lastIndex - 2; i++) {
                 if (lineSegmentsIntersect(
                     lastSegmentStart, lastSegmentEnd,
@@ -619,9 +637,7 @@
             
             redraw();
             
-            // 石を2つずつ線で結ぶアニメーション
             animatePairing(enclosedStones, () => {
-                // アニメーション完了後に結果を表示
                 updateResults();
                 
                 if (completedRounds.length === 4) {
@@ -639,7 +655,6 @@
         }
 
         function animatePairing(enclosedStones, callback) {
-            // 渦巻き状にソート：左→上→右→下の順で外側から中心へ
             const sortedStones = sortSpiralInward([...enclosedStones]);
             
             let pairIndex = 0;
@@ -654,7 +669,6 @@
                 const stone1 = sortedStones[pairIndex * 2];
                 const stone2 = sortedStones[pairIndex * 2 + 1];
                 
-                // 線を描画（one-oracle-dotsと同じスタイル）
                 ctx.strokeStyle = '#8b7355';
                 ctx.lineWidth = 2;
                 ctx.lineCap = 'round';
@@ -673,26 +687,24 @@
         function sortSpiralInward(stones) {
             const result = [];
             let remaining = [...stones];
-            let direction = 0; // 0:左, 1:上, 2:右, 3:下
+            let direction = 0;
             
             while (remaining.length > 0) {
-                // 各方向でソート
                 switch (direction % 4) {
-                    case 0: // X座標が小さい順（左）
+                    case 0:
                         remaining.sort((a, b) => a.x - b.x);
                         break;
-                    case 1: // Y座標が小さい順（上）
+                    case 1:
                         remaining.sort((a, b) => a.y - b.y);
                         break;
-                    case 2: // X座標が大きい順（右）
+                    case 2:
                         remaining.sort((a, b) => b.x - a.x);
                         break;
-                    case 3: // Y座標が大きい順（下）
+                    case 3:
                         remaining.sort((a, b) => b.y - a.y);
                         break;
                 }
                 
-                // 先頭から2点を取り出す（1点しかない場合は1点）
                 const count = Math.min(2, remaining.length);
                 for (let i = 0; i < count; i++) {
                     result.push(remaining.shift());
@@ -726,7 +738,6 @@
                 symbol = geomancySymbols[keys[0]];
             }
             
-            // 画像をプリロードしてから表示
             const img = new Image();
             img.onload = () => {
                 document.getElementById('symbol-image').src = `${pattern}.png`;
