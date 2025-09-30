@@ -407,15 +407,19 @@
             
             // 確定した領域をハイライト
             if (currentRoundResult && currentRoundResult.path) {
+                const path = currentRoundResult.path;
+                
+                // 塗りつぶし
                 ctx.fillStyle = 'rgba(139,115,85,0.15)';
                 ctx.beginPath();
-                ctx.moveTo(currentRoundResult.path[0].x, currentRoundResult.path[0].y);
-                for (let i = 1; i < currentRoundResult.path.length; i++) {
-                    ctx.lineTo(currentRoundResult.path[i].x, currentRoundResult.path[i].y);
+                ctx.moveTo(path[0].x, path[0].y);
+                for (let i = 1; i < path.length; i++) {
+                    ctx.lineTo(path[i].x, path[i].y);
                 }
                 ctx.closePath();
                 ctx.fill();
                 
+                // 線の描画
                 ctx.strokeStyle = '#8b7355';
                 ctx.lineWidth = 3;
                 ctx.stroke();
@@ -454,6 +458,33 @@
             
             const pos = getPointerPos(e);
             currentPath.push(pos);
+            
+            // 交差をチェック（リアルタイム）
+            if (currentPath.length > MIN_PATH_LENGTH) {
+                const intersection = checkLastSegmentIntersection(currentPath);
+                
+                if (intersection.intersects) {
+                    // 交差が発生したら即座に閉曲線を確定
+                    const newPath = [];
+                    
+                    // 交差点を追加
+                    newPath.push(intersection.point);
+                    
+                    // 交差点から交差点まで（ループ部分）
+                    for (let i = intersection.index1 + 1; i <= intersection.index2; i++) {
+                        newPath.push(currentPath[i]);
+                    }
+                    
+                    // 交差点に戻る
+                    newPath.push(intersection.point);
+                    
+                    currentPath = newPath;
+                    isDrawing = false; // 描画終了
+                    countEnclosedStones();
+                    return;
+                }
+            }
+            
             redraw();
             
             // 始点に近づいたかチェック
@@ -463,7 +494,113 @@
                 
                 if (distance < CLOSE_THRESHOLD) {
                     updateResultDisplay('指を離すと確定します');
+                } else {
+                    updateResultDisplay('線を描いています');
                 }
+            }
+        }
+
+        function checkLastSegmentIntersection(path) {
+            // 最後に追加されたセグメントが既存のセグメントと交差するかチェック
+            const lastIndex = path.length - 1;
+            if (lastIndex < 3) return { intersects: false };
+            
+            const lastSegmentStart = path[lastIndex - 1];
+            const lastSegmentEnd = path[lastIndex];
+            
+            // 最後のセグメント以外の全セグメントとチェック
+            for (let i = 0; i < lastIndex - 2; i++) {
+                if (lineSegmentsIntersect(
+                    lastSegmentStart, lastSegmentEnd,
+                    path[i], path[i + 1]
+                )) {
+                    const intersectionPoint = getIntersectionPoint(
+                        lastSegmentStart, lastSegmentEnd,
+                        path[i], path[i + 1]
+                    );
+                    return {
+                        intersects: true,
+                        index1: i,
+                        index2: lastIndex - 1,
+                        point: intersectionPoint
+                    };
+                }
+            }
+            
+            return { intersects: false };
+        }
+
+        function lineSegmentsIntersect(p1, p2, p3, p4) {
+            const ccw = (A, B, C) => {
+                return (C.y - A.y) * (B.x - A.x) > (B.y - A.y) * (C.x - A.x);
+            };
+            return ccw(p1, p3, p4) !== ccw(p2, p3, p4) && ccw(p1, p2, p3) !== ccw(p1, p2, p4);
+        }
+
+        function getIntersectionPoint(p1, p2, p3, p4) {
+            const x1 = p1.x, y1 = p1.y;
+            const x2 = p2.x, y2 = p2.y;
+            const x3 = p3.x, y3 = p3.y;
+            const x4 = p4.x, y4 = p4.y;
+            
+            const denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+            if (Math.abs(denom) < 0.0001) return null;
+            
+            const t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
+            
+            return {
+                x: x1 + t * (x2 - x1),
+                y: y1 + t * (y2 - y1)
+            };
+        }
+
+        function getAllIntersections(path) {
+            // すべての交差点を見つける
+            const intersections = [];
+            
+            for (let i = 0; i < path.length - 1; i++) {
+                for (let j = i + 2; j < path.length - 1; j++) {
+                    // 隣接するセグメントは除外
+                    if (Math.abs(i - j) <= 1) continue;
+                    
+                    if (lineSegmentsIntersect(path[i], path[i + 1], path[j], path[j + 1])) {
+                        const intersectionPoint = getIntersectionPoint(
+                            path[i], path[i + 1], 
+                            path[j], path[j + 1]
+                        );
+                        intersections.push({ 
+                            index1: i, 
+                            index2: j,
+                            point: intersectionPoint
+                        });
+                    }
+                }
+            }
+            
+            if (intersections.length === 0) {
+                return { intersects: false };
+            } else if (intersections.length === 1) {
+                return { 
+                    intersects: true, 
+                    first: intersections[0],
+                    last: intersections[0]
+                };
+            } else {
+                // 複数ある場合
+                // 始点に最も近い交差点 = index1が最小
+                const first = intersections.reduce((min, curr) => 
+                    curr.index1 < min.index1 ? curr : min
+                );
+                // 終点に最も近い交差点 = index2が最大
+                const last = intersections.reduce((max, curr) => 
+                    curr.index2 > max.index2 ? curr : max
+                );
+                
+                return { 
+                    intersects: true, 
+                    first: first,
+                    last: last
+                };
             }
         }
 
@@ -477,12 +614,12 @@
                 const endPoint = currentPath[currentPath.length - 1];
                 const distance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
                 
+                // 始点と終点が近い場合のみ閉じる（交差は描画中に処理済み）
                 if (distance < CLOSE_THRESHOLD) {
-                    // 閉曲線として確定
                     currentPath.push(startPoint); // 始点に戻る
                     countEnclosedStones();
                 } else {
-                    // 閉じていない場合はリセット
+                    // 閉じていない場合はエラー
                     currentPath = [];
                     updateResultDisplay('線が閉じませんでした。もう一度試してください');
                     redraw();
@@ -510,6 +647,16 @@
         function countEnclosedStones() {
             const enclosedStones = stones.filter(stone => isPointInPolygon(stone, currentPath));
             const count = enclosedStones.length;
+            
+            // 石が1つも囲まれていない場合は無効
+            if (count === 0) {
+                currentPath = [];
+                currentRoundResult = null;
+                updateResultDisplay('石が囲まれていません。もう一度試してください');
+                redraw();
+                return;
+            }
+            
             const parity = count % 2 === 0 ? 2 : 1;
             
             currentRoundResult = {
