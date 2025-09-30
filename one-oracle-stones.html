@@ -190,28 +190,36 @@
         .close-button {
             background: none;
             border: none;
-            font-size: 28px;
-            color: #5d4e37;
+            font-size: 24px;
+            color: #8b7355;
             cursor: pointer;
-            padding: 0;
-            line-height: 1;
             width: 32px;
             height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(139,115,85,0.1);
+            color: #5d4e37;
         }
 
         .symbol-image-area {
-            display: flex;
-            justify-content: center;
+            text-align: center;
             margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(139,115,85,0.2);
         }
 
         .symbol-image {
-            width: 120px;
-            height: 120px;
-            object-fit: contain;
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
         }
 
         .symbol-name {
@@ -308,14 +316,18 @@
                 <img class="symbol-image" id="symbol-image" src="" alt="シンボル">
             </div>
             
-            <div class="symbol-name" id="symbol-name"></div>
-            
-            <div class="symbol-attributes">
-                <div class="symbol-attribute" id="symbol-yesno"></div>
-                <div class="symbol-attribute" id="symbol-fortune"></div>
+            <div class="symbol-name" id="symbol-name">
+                Fortuna Minor（小吉）
             </div>
             
-            <div class="symbol-meaning" id="symbol-meaning"></div>
+            <div class="symbol-attributes">
+                <div class="symbol-attribute" id="symbol-yesno">Yes/No: イエス</div>
+                <div class="symbol-attribute" id="symbol-fortune">吉凶: 小吉</div>
+            </div>
+            
+            <div class="symbol-meaning" id="symbol-meaning">
+                小さく一時的な幸運、ささやかな幸せ。周りからの援助。
+            </div>
         </div>
     </div>
 
@@ -376,6 +388,7 @@
         function redraw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
+            // 通常の石を描画
             stones.forEach(stone => {
                 ctx.fillStyle = '#8b7355';
                 ctx.beginPath();
@@ -383,6 +396,7 @@
                 ctx.fill();
             });
             
+            // 現在描画中のパスを描画
             if (currentPath.length > 0) {
                 ctx.strokeStyle = '#5d4e37';
                 ctx.lineWidth = 2;
@@ -395,6 +409,7 @@
                 }
                 ctx.stroke();
                 
+                // 閉じる準備ができているかのヒント表示
                 if (currentPath.length > MIN_PATH_LENGTH) {
                     const startPoint = currentPath[0];
                     const endPoint = currentPath[currentPath.length - 1];
@@ -421,9 +436,11 @@
                 }
             }
             
+            // 完了した領域の表示（ペアリング線を描画する前の状態）
             if (currentRoundResult && currentRoundResult.path) {
                 const path = currentRoundResult.path;
                 
+                // 囲まれた領域の背景
                 ctx.fillStyle = 'rgba(139,115,85,0.15)';
                 ctx.beginPath();
                 ctx.moveTo(path[0].x, path[0].y);
@@ -433,16 +450,10 @@
                 ctx.closePath();
                 ctx.fill();
                 
+                // 囲み線
                 ctx.strokeStyle = '#8b7355';
                 ctx.lineWidth = 3;
                 ctx.stroke();
-                
-                currentRoundResult.enclosedStones.forEach(stone => {
-                    ctx.fillStyle = '#d4a574';
-                    ctx.beginPath();
-                    ctx.arc(stone.x, stone.y, STONE_RADIUS + 2, 0, Math.PI * 2);
-                    ctx.fill();
-                });
             }
         }
 
@@ -470,10 +481,12 @@
             const pos = getPointerPos(e);
             currentPath.push(pos);
             
+            // 自己交差のチェック
             if (currentPath.length > MIN_PATH_LENGTH) {
                 const intersection = checkLastSegmentIntersection(currentPath);
                 
                 if (intersection.intersects) {
+                    // 交差点で閉じたパスを作成
                     const newPath = [];
                     newPath.push(intersection.point);
                     
@@ -500,6 +513,7 @@
             const lastSegmentStart = path[lastIndex - 1];
             const lastSegmentEnd = path[lastIndex];
             
+            // 最後の線分と他の線分との交差をチェック
             for (let i = 0; i < lastIndex - 2; i++) {
                 if (lineSegmentsIntersect(
                     lastSegmentStart, lastSegmentEnd,
@@ -625,7 +639,7 @@
         }
 
         function animatePairing(enclosedStones, callback) {
-            // 渦巻き状にソート：左→下→右→上の順で外側から中心へ
+            // 渦巻き状にソート：左→上→右→下の順で外側から中心へ
             const sortedStones = sortSpiralInward([...enclosedStones]);
             
             let pairIndex = 0;
@@ -705,37 +719,37 @@
         }
 
         function showSymbolDialog() {
-            const symbolKey = completedRounds.join('');
-            const symbol = geomancySymbols[symbolKey];
+            const pattern = completedRounds.join('');
+            let symbol = geomancySymbols[pattern];
+            if (!symbol) {
+                const keys = Object.keys(geomancySymbols);
+                symbol = geomancySymbols[keys[0]];
+            }
             
-            if (symbol) {
+            // 画像をプリロードしてから表示
+            const img = new Image();
+            img.onload = () => {
+                document.getElementById('symbol-image').src = `${pattern}.png`;
                 document.getElementById('symbol-name').textContent = symbol.name;
                 document.getElementById('symbol-yesno').textContent = `Yes/No: ${symbol.yesno}`;
                 document.getElementById('symbol-fortune').textContent = `吉凶: ${symbol.fortune}`;
                 document.getElementById('symbol-meaning').textContent = symbol.meaning;
                 
-                const imageMap = {
-                    '2222': 'populus', '1111': 'via', '2112': 'conjunctio', '1221': 'carcer',
-                    '2211': 'fortuna_major', '1122': 'fortuna_minor', '2121': 'acquisitio', '1212': 'amissio',
-                    '1222': 'laetitia', '2221': 'tristitia', '1211': 'puella', '1121': 'puer',
-                    '2212': 'albus', '2122': 'rubeus', '2111': 'caput_draconis', '1112': 'cauda_draconis'
-                };
-                
-                document.getElementById('symbol-image').src = `images/${imageMap[symbolKey]}.png`;
-            }
-            
-            document.getElementById('symbolDialog').classList.add('show');
+                document.getElementById('symbolDialog').classList.add('show');
+            };
+            img.src = `${pattern}.png`;
         }
 
         function closeSymbolDialog() {
             document.getElementById('symbolDialog').classList.remove('show');
-            
-            completedRounds = [];
-            currentPath = [];
-            currentRoundResult = null;
-            updateResults();
-            initStones();
-            redraw();
+            setTimeout(() => {
+                completedRounds = [];
+                currentPath = [];
+                currentRoundResult = null;
+                updateResults();
+                initStones();
+                redraw();
+            }, 300);
         }
 
         canvas.addEventListener('mousedown', startDrawing);
