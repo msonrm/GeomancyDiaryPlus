@@ -288,7 +288,7 @@
             
             <div style="padding: 16px 20px 20px 20px; text-align: center;">
                 <p style="color: rgba(93,78,55,0.7); font-size: 14px; margin-bottom: 16px; line-height: 1.4;" id="instruction-text">
-                    どんなことを占いたいのかを強く心に思いながら、画面長押しでダイスを振ります。4つのエレメント（火・風・水・地）を象徴する4つのダイスが振られ、出た目に応じてジオマンシーのシンボルが決まります。
+                    どんなことを占いたいのかを強く心に思いながら、あなたのタイミングで画面をタップしてください。4つのエレメント（火・風・水・地）を象徴する4つのダイスが振られ、出た目に応じてジオマンシーのシンボルが決まります。
                 </p>
                 
                 <div class="dice-results">
@@ -369,7 +369,6 @@
         let diceObjects = [];
         let diceResults = [];
         let clock = null;
-        let isRolling = false;
 
         // シールドチャート用の変数
         let completedSymbols = [];
@@ -399,9 +398,7 @@
         }
 
         function handleDiceContainerClick() {
-            if (!isRolling) {
-                initDicePhysics();
-            }
+            initDicePhysics();
         }
 
         function init3DScene() {
@@ -646,9 +643,7 @@
         }
 
         function initDicePhysics() {
-            if (!world || !scene || isRolling) return;
-            
-            isRolling = true;
+            if (!world || !scene) return;
             
             if (diceObjects.length > 0 && diceObjects.some(dice => dice.body)) {
                 diceObjects.forEach(dice => {
@@ -900,7 +895,6 @@
             
             if (currentSymbolIndex >= 4) {
                 // 4つすべて完了
-                isRolling = false;
                 return;
             }
             
@@ -910,7 +904,6 @@
                 createIdleDice();
                 resetDiceResults();
                 updateInstructionText();
-                isRolling = false;
             }, 1000);
         }
 
@@ -919,7 +912,7 @@
             
             const instructionText = document.getElementById('instruction-text');
             const goals = ['右', '左', '上', '下'];
-            instructionText.textContent = `目的: ${goals[currentSymbolIndex]} のシンボルを生成しています。画面長押しでダイスを振ります。`;
+            instructionText.textContent = `目的: ${goals[currentSymbolIndex]} のシンボルを生成しています。画面をタップしてダイスを振ってください。`;
         }
 
         function closeSymbolDialog() {
@@ -928,7 +921,6 @@
                 clearDice();
                 createIdleDice();
                 resetDiceResults();
-                isRolling = false;
             }, 300);
         }
 
