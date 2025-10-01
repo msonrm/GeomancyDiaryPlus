@@ -378,6 +378,7 @@
         function initStones() {
             stones = [];
             const MIN_DISTANCE = STONE_RADIUS * 5; // 石の半径の5倍 = 20px
+            const EDGE_MARGIN = 20; // キャンバス端からのマージン
             const MAX_ATTEMPTS = 50; // 各石の配置試行回数の上限
             
             for (let i = 0; i < STONE_COUNT; i++) {
@@ -386,10 +387,10 @@
                 let validPosition = false;
                 
                 while (!validPosition && attempts < MAX_ATTEMPTS) {
-                    // ランダムな位置を生成
+                    // ランダムな位置を生成（マージンを考慮）
                     newStone = {
-                        x: STONE_RADIUS + Math.random() * (canvas.width - STONE_RADIUS * 2),
-                        y: STONE_RADIUS + Math.random() * (canvas.height - STONE_RADIUS * 2)
+                        x: EDGE_MARGIN + Math.random() * (canvas.width - EDGE_MARGIN * 2),
+                        y: EDGE_MARGIN + Math.random() * (canvas.height - EDGE_MARGIN * 2)
                     };
                     
                     // 既存の石との距離をチェック
@@ -658,7 +659,10 @@
             const sortedStones = sortSpiralInward([...enclosedStones]);
             
             let pairIndex = 0;
-            const totalPairs = Math.floor(sortedStones.length / 2);
+            // 偶数の場合は2個残す、奇数の場合は1個残す
+            const isEven = sortedStones.length % 2 === 0;
+            const stonesToPair = isEven ? sortedStones.length - 2 : sortedStones.length - 1;
+            const totalPairs = Math.floor(stonesToPair / 2);
             
             function drawNextPair() {
                 if (pairIndex >= totalPairs) {
