@@ -377,9 +377,9 @@
 
         function initStones() {
             stones = [];
-            const MIN_DISTANCE = STONE_RADIUS * 5; // 石の半径の5倍 = 20px
-            const EDGE_MARGIN = 20; // キャンバス端からのマージン
-            const MAX_ATTEMPTS = 50; // 各石の配置試行回数の上限
+            const MIN_DISTANCE = STONE_RADIUS * 5;
+            const EDGE_MARGIN = 20;
+            const MAX_ATTEMPTS = 50;
             
             for (let i = 0; i < STONE_COUNT; i++) {
                 let attempts = 0;
@@ -387,13 +387,11 @@
                 let validPosition = false;
                 
                 while (!validPosition && attempts < MAX_ATTEMPTS) {
-                    // ランダムな位置を生成（マージンを考慮）
                     newStone = {
                         x: EDGE_MARGIN + Math.random() * (canvas.width - EDGE_MARGIN * 2),
                         y: EDGE_MARGIN + Math.random() * (canvas.height - EDGE_MARGIN * 2)
                     };
                     
-                    // 既存の石との距離をチェック
                     validPosition = true;
                     for (let j = 0; j < stones.length; j++) {
                         const distance = Math.hypot(newStone.x - stones[j].x, newStone.y - stones[j].y);
@@ -406,7 +404,6 @@
                     attempts++;
                 }
                 
-                // MAX_ATTEMPTSに達した場合でも石を配置（無限ループ防止）
                 if (newStone) {
                     stones.push(newStone);
                 }
@@ -659,13 +656,21 @@
             const sortedStones = sortSpiralInward([...enclosedStones]);
             
             let pairIndex = 0;
-            // 偶数の場合は2個残す、奇数の場合は1個残す
             const isEven = sortedStones.length % 2 === 0;
             const stonesToPair = isEven ? sortedStones.length - 2 : sortedStones.length - 1;
             const totalPairs = Math.floor(stonesToPair / 2);
             
             function drawNextPair() {
                 if (pairIndex >= totalPairs) {
+                    // ペアリング完了後、残った石を金色で強調
+                    const remainingStones = sortedStones.slice(totalPairs * 2);
+                    remainingStones.forEach(stone => {
+                        ctx.fillStyle = '#f39c12';
+                        ctx.beginPath();
+                        ctx.arc(stone.x, stone.y, STONE_RADIUS * 1.8, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+                    
                     if (callback) setTimeout(callback, 300);
                     return;
                 }
