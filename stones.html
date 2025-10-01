@@ -813,13 +813,17 @@
             const pattern = completedRounds.join('');
             completedSymbols.push(pattern);
             
-            // シンボルスロットに画像を表示（右から順に）
-            const slotIndex = currentSymbolIndex;
+            // シンボルスロットに画像を表示（右から順に：3, 2, 1, 0）
+            const slotIndex = 3 - currentSymbolIndex;
             const slot = document.getElementById(`symbol-slot-${slotIndex}`);
             const img = document.createElement('img');
             img.src = `${pattern}.png`;
             img.alt = pattern;
             slot.appendChild(img);
+            
+            // 枠線と背景色を削除
+            slot.style.border = 'none';
+            slot.style.background = 'transparent';
             
             // 次のシンボルへ
             currentSymbolIndex++;
