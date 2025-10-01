@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ワンオラクル（ダイス）- ジオマンシー占い</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Hiragino Sans', 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #e8dcc6 0%, #d4c4a8 100%);
+            min-height: 100vh;
+            color: #5d4e37;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: none;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #5d4e37;
+            padding: 16px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: left;
+        }
+
+        .back-button:hover {
+            color: #8b7355;
+        }
+
+        #dice-3d-container {
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+            background: rgba(255,255,255,0.3);
+            border-radius: 12px;
+            cursor: pointer;
+        }
+
+        .dice-results {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .dice-result-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dice-result-box {
+            background: rgba(255,255,255,0.9);
+            border-radius: 8px;
+            padding: 12px;
+            width: 60px;
+            height: 60px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dice-result-box.fire {
+            border-color: #ffaaaa;
+            background: #ffdddd;
+        }
+
+        .dice-result-box.air {
+            border-color: #ffffaa;
+            background: #ffffdd;
+        }
+
+        .dice-result-box.water {
+            border-color: #aaccff;
+            background: #ddeeff;
+        }
+
+        .dice-result-box.earth {
+            border-color: #aaffaa;
+            background: #ddffdd;
+        }
+
+        .element-label {
+            font-size: 11px;
+            color: rgba(93,78,55,0.8);
+            font-weight: 600;
+        }
+
+        .dice-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #5d4e37;
+        }
+
+        .dice-value.empty {
+            color: rgba(93,78,55,0.3);
+            font-size: 16px;
+        }
+
+        .symbol-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .symbol-dialog.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .symbol-content {
+            background: #f5f0e8;
+            border: 2px solid #8b7355;
+            border-radius: 12px;
+            width: calc(100% - 40px);
+            max-width: 400px;
+            position: relative;
+            padding: 24px;
+            opacity: 0;
+            transform: scale(0.9);
+            transition: opacity 0.8s ease, transform 0.8s ease;
+        }
+
+        .symbol-dialog.show .symbol-content {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .symbol-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .symbol-header h3 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 600;
+            color: #5d4e37;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #8b7355;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .close-button:hover {
+            background: rgba(139,115,85,0.1);
+            color: #5d4e37;
+        }
+
+        .symbol-image-area {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(139,115,85,0.2);
+        }
+
+        .symbol-image {
+            max-width: 100%;
+            height: auto;
+            max-height: 200px;
+        }
+
+        .symbol-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #5d4e37;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .symbol-attributes {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .symbol-attribute {
+            background: rgba(139,115,85,0.1);
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 13px;
+            color: #5d4e37;
+            font-weight: 500;
+        }
+
+        .symbol-meaning {
+            font-size: 15px;
+            color: #5d4e37;
+            line-height: 1.6;
+            text-align: left;
+        }
+
+        .symbol-slots {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0;
+            padding: 0 20px;
+        }
+
+        .symbol-slot {
+            background: rgba(255,255,255,0.5);
+            border: 2px solid rgba(139,115,85,0.3);
+            border-radius: 8px;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .symbol-slot img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="back-button" onclick="goBack()">← 戻る</button>
+        
+        <div style="flex: 1; display: flex; flex-direction: column;">
+            <div id="dice-3d-container" onclick="handleDiceContainerClick()"></div>
+            
+            <div style="padding: 16px 20px 20px 20px; text-align: center;">
+                <p style="color: rgba(93,78,55,0.7); font-size: 14px; margin-bottom: 16px; line-height: 1.4;" id="instruction-text">
+                    どんなことを占いたいのかを強く心に思いながら、画面長押しでダイスを振ります。4つのエレメント（火・風・水・地）を象徴する4つのダイスが振られ、出た目に応じてジオマンシーのシンボルが決まります。
+                </p>
+                
+                <div class="dice-results">
+                    <div class="dice-result-container">
+                        <div class="dice-result-box fire">
+                            <div class="dice-value empty" id="dice-result-0">?</div>
+                        </div>
+                        <div class="element-label">火</div>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box air">
+                            <div class="dice-value empty" id="dice-result-1">?</div>
+                        </div>
+                        <div class="element-label">風</div>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box water">
+                            <div class="dice-value empty" id="dice-result-2">?</div>
+                        </div>
+                        <div class="element-label">水</div>
+                    </div>
+                    <div class="dice-result-container">
+                        <div class="dice-result-box earth">
+                            <div class="dice-value empty" id="dice-result-3">?</div>
+                        </div>
+                        <div class="element-label">地</div>
+                    </div>
+                </div>
+                
+                <!-- シールドチャート用のシンボル表示欄 -->
+                <div class="symbol-slots" id="symbol-slots" style="display: none;">
+                    <div class="symbol-slot" id="symbol-slot-0"></div>
+                    <div class="symbol-slot" id="symbol-slot-1"></div>
+                    <div class="symbol-slot" id="symbol-slot-2"></div>
+                    <div class="symbol-slot" id="symbol-slot-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="symbol-dialog" id="symbolDialog">
+        <div class="symbol-content">
+            <div class="symbol-header">
+                <h3>ワンオラクル結果</h3>
+                <button class="close-button" onclick="closeSymbolDialog()">×</button>
+            </div>
+            
+            <div class="symbol-image-area">
+                <img class="symbol-image" id="symbol-image" src="" alt="シンボル">
+            </div>
+            
+            <div class="symbol-name" id="symbol-name">
+                Fortuna Minor（小吉）
+            </div>
+            
+            <div class="symbol-attributes">
+                <div class="symbol-attribute" id="symbol-yesno">Yes/No: イエス</div>
+                <div class="symbol-attribute" id="symbol-fortune">吉凶: 小吉</div>
+            </div>
+            
+            <div class="symbol-meaning" id="symbol-meaning">
+                小さく一時的な幸運、ささやかな幸せ。周りからの援助。
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script>
+
+    <script>
+        // URLパラメータからモードを取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const mode = urlParams.get('mode') || 'oneoracle';
+        const isShieldMode = mode === 'shield';
+        
+        let scene, camera, renderer, world;
+        let animationId;
+        let diceObjects = [];
+        let diceResults = [];
+        let clock = null;
+        let isRolling = false;
+
+        // シールドチャート用の変数
+        let completedSymbols = [];
+        let currentSymbolIndex = 0;
+
+        const geomancySymbols = {
+            '2222': { name: 'Populus（人々）', meaning: '物事や人が多数ある状態。受け身。安定。', yesno: 'イエス', fortune: '吉' },
+            '1111': { name: 'Via（道）', meaning: '変化、動くこと、過程。決断。積極性、能動性。', yesno: 'ノー', fortune: '吉でも凶でもない。旅や移動について吉' },
+            '2112': { name: 'Conjunctio（つながり）', meaning: '違う者同士結びつく、目的を持って集まる、縁が生まれる。失せ物が見つかる。', yesno: 'イエス', fortune: '吉と凶の両方' },
+            '1221': { name: 'Carcer（拘束）', meaning: '孤独、身動きが取れない、ひきこもり。困滞、現状維持。', yesno: 'ノー', fortune: '凶。セキュリティに関しては吉' },
+            '2211': { name: 'Fortuna Major（大吉）', meaning: '大きな幸運。自分の思い通りにことが運ぶ。', yesno: 'イエス', fortune: '大吉' },
+            '1122': { name: 'Fortuna Minor（小吉）', meaning: '小さく一時的な幸運、ささやかな幸せ。周りからの援助。', yesno: 'イエス', fortune: '小吉' },
+            '2121': { name: 'Acquisitio（獲得）', meaning: '収穫、利益。願いが叶う。何かを受け取る、受け入れる。', yesno: 'イエス', fortune: '吉' },
+            '1212': { name: 'Amissio（喪失）', meaning: '損失、愛情や金銭などを失う。病気やトラブル、悪癖がなくなる。', yesno: 'ノー', fortune: '凶' },
+            '1222': { name: 'Laetitia（喜び）', meaning: '喜ばしいこと、笑い、成功。音楽や踊り。髭のある男性。', yesno: 'イエス', fortune: '吉' },
+            '2221': { name: 'Tristitia（悲しみ）', meaning: '不幸、受難、宿命。', yesno: 'ノー', fortune: '凶。占いや魔術に関しては吉' },
+            '1211': { name: 'Puella（少女）', meaning: '女性らしさ、美しさ。ときめき、嬉しさ。目先の楽しみ。', yesno: 'イエス', fortune: '吉' },
+            '1121': { name: 'Puer（少年）', meaning: '男性らしさ、力強さ、未熟さ。未来を切り開く。', yesno: 'ノー', fortune: '凶。争い事には吉' },
+            '2212': { name: 'Albus（白）', meaning: '公正、高潔さ、正義。片思いやプラトニック・ラブ。', yesno: 'イエス', fortune: '吉' },
+            '2122': { name: 'Rubeus（赤）', meaning: '争い事、闘争心。悪いことには吉、良いことには凶。', yesno: 'ノー', fortune: '凶' },
+            '2111': { name: 'Caput Draconis（竜の頭）', meaning: '始まり、新しい扉が開く、前例のない課題に取り組む。やりすぎの傾向。', yesno: 'イエス', fortune: '吉凶入り混じる。何かを始めるには吉' },
+            '1112': { name: 'Cauda Draconis（竜の尾）', meaning: '終わり、物事の完成、途絶。吉は凶となり、凶は吉となる。', yesno: 'ノー', fortune: '吉でも凶でもない。何かを終わらせるには吉' }
+        };
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function handleDiceContainerClick() {
+            if (!isRolling) {
+                initDicePhysics();
+            }
+        }
+
+        function init3DScene() {
+            const container = document.getElementById('dice-3d-container');
+            if (!container || !window.THREE || !window.CANNON) return;
+            
+            const existingCanvas = container.querySelector('canvas');
+            if (existingCanvas) existingCanvas.remove();
+            
+            try {
+                const width = container.clientWidth;
+                const height = container.clientHeight;
+                
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xf0f0f0);
+                
+                camera = new THREE.OrthographicCamera(-10, 10, 10, -10, 0.1, 1000);
+                camera.position.set(0, 20, 0);
+                camera.lookAt(0, 0, 0);
+                
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(width, height);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                renderer.domElement.style.borderRadius = '12px';
+                container.appendChild(renderer.domElement);
+                
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.8);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.6);
+                directionalLight.position.set(-8, 18, -5);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 2048;
+                directionalLight.shadow.mapSize.height = 2048;
+                directionalLight.shadow.camera.left = -15;
+                directionalLight.shadow.camera.right = 15;
+                directionalLight.shadow.camera.top = 15;
+                directionalLight.shadow.camera.bottom = -15;
+                directionalLight.shadow.radius = 12;
+                scene.add(directionalLight);
+                
+                world = new CANNON.World();
+                world.gravity.set(0, -9, 0);
+                world.broadphase = new CANNON.NaiveBroadphase();
+                
+                const diceMaterial = new CANNON.Material('dice');
+                const floorMaterial = new CANNON.Material('floor');
+                const diceDiceContact = new CANNON.ContactMaterial(diceMaterial, diceMaterial, { 
+                    friction: 0.1, 
+                    restitution: 1.2 
+                });
+                world.addContactMaterial(diceDiceContact);
+                
+                const floorDiceContact = new CANNON.ContactMaterial(floorMaterial, diceMaterial, { 
+                    friction: 0.4, 
+                    restitution: 0.3 
+                });
+                world.addContactMaterial(floorDiceContact);
+                
+                createFloor();
+                createWalls();
+                
+                clock = new THREE.Clock();
+                
+                createIdleDice();
+                animate3D();
+            } catch (error) {
+                console.error('3Dシーン初期化エラー:', error);
+            }
+        }
+
+        function createFloor() {
+            const container = document.getElementById('dice-3d-container');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            const cameraWidth = 20;
+            const cameraHeight = 20;
+            
+            let floorWidth, floorHeight;
+            if (containerWidth > containerHeight) {
+                floorHeight = cameraHeight;
+                floorWidth = (containerWidth / containerHeight) * cameraHeight;
+            } else {
+                floorWidth = cameraWidth;
+                floorHeight = (containerHeight / containerWidth) * cameraWidth;
+            }
+            
+            floorWidth = Math.min(Math.max(floorWidth, 16), 40);
+            floorHeight = Math.min(Math.max(floorHeight, 16), 40);
+            
+            const floorMaterial = new CANNON.Material('floor');
+            const floorShape = new CANNON.Plane();
+            const floorBody = new CANNON.Body({ mass: 0, material: floorMaterial });
+            floorBody.addShape(floorShape);
+            floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+            floorBody.position.set(0, -6, 0);
+            world.add(floorBody);
+            
+            const floorGeometry = new THREE.PlaneGeometry(floorWidth, floorHeight);
+            const floorMaterialThree = new THREE.MeshLambertMaterial({ 
+                color: 0xe8dcc6, 
+                transparent: true, 
+                opacity: 0.8 
+            });
+            const floorMesh = new THREE.Mesh(floorGeometry, floorMaterialThree);
+            floorMesh.rotation.x = -Math.PI / 2;
+            floorMesh.position.y = -6;
+            floorMesh.receiveShadow = true;
+            scene.add(floorMesh);
+        }
+
+        function createWalls() {
+            const container = document.getElementById('dice-3d-container');
+            const containerWidth = container.clientWidth;
+            const containerHeight = container.clientHeight;
+            
+            const cameraWidth = 20;
+            const cameraHeight = 20;
+            
+            let wallDistanceX, wallDistanceZ;
+            if (containerWidth > containerHeight) {
+                wallDistanceZ = cameraHeight / 2;
+                wallDistanceX = ((containerWidth / containerHeight) * cameraHeight) / 2;
+            } else {
+                wallDistanceX = cameraWidth / 2;
+                wallDistanceZ = ((containerHeight / containerWidth) * cameraWidth) / 2;
+            }
+            
+            const floorWidth = Math.min(Math.max(wallDistanceX * 2, 16), 40);
+            const floorHeight = Math.min(Math.max(wallDistanceZ * 2, 16), 40);
+            wallDistanceX = floorWidth / 2;
+            wallDistanceZ = floorHeight / 2;
+            
+            const wallHeight = 12;
+            const wallPositions = [
+                { x: wallDistanceX, y: wallHeight/2 - 6, z: 0, rotY: 0 },
+                { x: -wallDistanceX, y: wallHeight/2 - 6, z: 0, rotY: 0 },
+                { x: 0, y: wallHeight/2 - 6, z: wallDistanceZ, rotY: Math.PI/2 },
+                { x: 0, y: wallHeight/2 - 6, z: -wallDistanceZ, rotY: Math.PI/2 }
+            ];
+            
+            wallPositions.forEach((pos) => {
+                const wallShape = new CANNON.Box(new CANNON.Vec3(0.5, wallHeight/2, Math.max(wallDistanceX, wallDistanceZ)));
+                const wallBody = new CANNON.Body({ mass: 0 });
+                wallBody.addShape(wallShape);
+                wallBody.position.set(pos.x, pos.y, pos.z);
+                if (pos.rotY) wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), pos.rotY);
+                world.add(wallBody);
+            });
+        }
+
+        function animate3D() {
+            animationId = requestAnimationFrame(animate3D);
+            
+            if (world && clock) {
+                const deltaTime = clock.getDelta();
+                const fixedTimeStep = 1/60;
+                const maxSubSteps = 3;
+                world.step(fixedTimeStep, deltaTime, maxSubSteps);
+            }
+            
+            animateIdleDice();
+            diceObjects.forEach((dice) => {
+                if (dice.body && dice.mesh && !dice.idleRotation) {
+                    dice.mesh.position.copy(dice.body.position);
+                    dice.mesh.quaternion.copy(dice.body.quaternion);
+                }
+            });
+            
+            if (renderer && scene && camera) renderer.render(scene, camera);
+        }
+
+        function createIdleDice() {
+            if (!world || !scene) return;
+            clearDice();
+            resetDiceResults();
+            
+            const elements = ['fire', 'air', 'water', 'earth'];
+            const positions = [[-3, 12, -3], [3, 13, -3], [-3, 14, 3], [3, 15, 3]];
+            
+            for (let i = 0; i < 4; i++) {
+                const pos = positions[i];
+                const colors = { 
+                    fire: 0xffcccc, 
+                    air: 0xffffcc, 
+                    water: 0xccddff, 
+                    earth: 0xccffcc 
+                };
+                
+                const diceGeometry = createRoundedBoxGeometry(3.0, 3.0, 3.0, 0.3, 8);
+                const diceMaterialThree = new THREE.MeshLambertMaterial({ color: colors[elements[i]] });
+                const diceMesh = new THREE.Mesh(diceGeometry, diceMaterialThree);
+                diceMesh.position.set(pos[0], pos[1], pos[2]);
+                diceMesh.castShadow = true;
+                diceMesh.receiveShadow = true;
+                scene.add(diceMesh);
+                
+                createDiceDots(diceMesh);
+                
+                const diceObject = { 
+                    mesh: diceMesh, 
+                    id: i, 
+                    element: elements[i], 
+                    idleRotation: true 
+                };
+                diceObjects.push(diceObject);
+            }
+        }
+
+        function animateIdleDice() {
+            diceObjects.forEach((dice) => {
+                if (dice.idleRotation && dice.mesh) {
+                    dice.mesh.rotation.x += 0.01;
+                    dice.mesh.rotation.y += 0.015;
+                    dice.mesh.rotation.z += 0.008;
+                }
+            });
+        }
+
+        function createRoundedBoxGeometry(width, height, depth, radius, smoothness) {
+            const shape = new THREE.Shape();
+            const eps = 0.00001;
+            const radius0 = radius - eps;
+            shape.absarc(eps, eps, eps, -Math.PI / 2, -Math.PI, true);
+            shape.absarc(eps, height - radius * 2, eps, Math.PI, Math.PI / 2, true);
+            shape.absarc(width - radius * 2, height - radius * 2, eps, Math.PI / 2, 0, true);
+            shape.absarc(width - radius * 2, eps, eps, 0, -Math.PI / 2, true);
+            
+            const geometry = new THREE.ExtrudeGeometry(shape, {
+                depth: depth - radius * 2,
+                bevelEnabled: true,
+                bevelSegments: smoothness,
+                steps: 1,
+                bevelSize: radius0,
+                bevelThickness: radius,
+                curveSegments: smoothness
+            });
+            geometry.center();
+            return geometry;
+        }
+
+        function initDicePhysics() {
+            if (!world || !scene || isRolling) return;
+            
+            isRolling = true;
+            
+            if (diceObjects.length > 0 && diceObjects.some(dice => dice.body)) {
+                diceObjects.forEach(dice => {
+                    if (dice.body && !dice.idleRotation) {
+                        dice.body.angularVelocity.set(
+                            (Math.random() - 0.5) * 25,
+                            (Math.random() - 0.5) * 25,
+                            (Math.random() - 0.5) * 25
+                        );
+                        dice.body.velocity.set(
+                            (Math.random() - 0.5) * 3,
+                            4,
+                            (Math.random() - 0.5) * 3
+                        );
+                    }
+                });
+                resetDiceResults();
+                checkDiceSettled();
+            } else {
+                clearDice();
+                createGeomancyDice();
+            }
+        }
+
+        function createGeomancyDice() {
+            clearDice();
+            resetDiceResults();
+            
+            const elements = ['fire', 'air', 'water', 'earth'];
+            for (let i = 0; i < 4; i++) {
+                const dice = createSingleDice(i, elements[i]);
+                diceObjects.push(dice);
+            }
+            
+            checkDiceSettled();
+        }
+
+        function createSingleDice(index, element) {
+            const positions = [[-3, 12, -3], [3, 13, -3], [-3, 14, 3], [3, 15, 3]];
+            const pos = positions[index];
+            
+            const diceShape = new CANNON.Box(new CANNON.Vec3(1.5, 1.5, 1.5));
+            const diceMaterial = new CANNON.Material('dice');
+            const diceBody = new CANNON.Body({ 
+                mass: 1, 
+                material: diceMaterial, 
+                linearDamping: 0.1, 
+                angularDamping: 0.1 
+            });
+            diceBody.addShape(diceShape);
+            diceBody.position.set(pos[0], pos[1], pos[2]);
+            diceBody.angularVelocity.set(
+                (Math.random() - 0.5) * 15, 
+                (Math.random() - 0.5) * 15, 
+                (Math.random() - 0.5) * 15
+            );
+            world.add(diceBody);
+            
+            const colors = { 
+                fire: 0xffcccc, 
+                air: 0xffffcc, 
+                water: 0xccddff, 
+                earth: 0xccffcc 
+            };
+            const diceGeometry = createRoundedBoxGeometry(3.0, 3.0, 3.0, 0.3, 8);
+            const diceMaterialThree = new THREE.MeshLambertMaterial({ color: colors[element] });
+            const diceMesh = new THREE.Mesh(diceGeometry, diceMaterialThree);
+            diceMesh.castShadow = true;
+            diceMesh.receiveShadow = true;
+            scene.add(diceMesh);
+            
+            createDiceDots(diceMesh);
+            
+            const diceObject = { 
+                body: diceBody, 
+                mesh: diceMesh, 
+                id: index, 
+                element: element, 
+                idleRotation: false 
+            };
+            return diceObject;
+        }
+
+        function createDiceDots(diceMesh) {
+            const dotGeometry = new THREE.CircleGeometry(0.24, 16);
+            const dotMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0x333333, 
+                side: THREE.DoubleSide 
+            });
+            
+            const faceValues = [1, 2, 1, 2, 1, 2];
+            diceMesh.userData.faceValues = faceValues;
+            
+            const faces = [
+                { normal: [1, 0, 0], center: [1.51, 0, 0], rotation: [0, Math.PI/2, 0], index: 0 },
+                { normal: [-1, 0, 0], center: [-1.51, 0, 0], rotation: [0, -Math.PI/2, 0], index: 1 },
+                { normal: [0, 1, 0], center: [0, 1.51, 0], rotation: [-Math.PI/2, 0, 0], index: 2 },
+                { normal: [0, -1, 0], center: [0, -1.51, 0], rotation: [Math.PI/2, 0, 0], index: 3 },
+                { normal: [0, 0, 1], center: [0, 0, 1.51], rotation: [0, 0, 0], index: 4 },
+                { normal: [0, 0, -1], center: [0, 0, -1.51], rotation: [0, Math.PI, 0], index: 5 }
+            ];
+            
+            faces.forEach((face) => {
+                const dotCount = faceValues[face.index];
+                if (dotCount === 1) {
+                    const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                    dot.position.set(face.center[0], face.center[1], face.center[2]);
+                    dot.rotation.set(face.rotation[0], face.rotation[1], face.rotation[2]);
+                    diceMesh.add(dot);
+                } else {
+                    const positions = [
+                        [face.center[0] - 0.6, face.center[1] - 0.6, face.center[2]], 
+                        [face.center[0] + 0.6, face.center[1] + 0.6, face.center[2]]
+                    ];
+                    if (face.normal[0] !== 0) {
+                        positions[0] = [face.center[0], face.center[1] - 0.6, face.center[2] - 0.6];
+                        positions[1] = [face.center[0], face.center[1] + 0.6, face.center[2] + 0.6];
+                    } else if (face.normal[1] !== 0) {
+                        positions[0] = [face.center[0] - 0.6, face.center[1], face.center[2] - 0.6];
+                        positions[1] = [face.center[0] + 0.6, face.center[1], face.center[2] + 0.6];
+                    }
+                    positions.forEach(pos => {
+                        const dot = new THREE.Mesh(dotGeometry, dotMaterial);
+                        dot.position.set(pos[0], pos[1], pos[2]);
+                        dot.rotation.set(face.rotation[0], face.rotation[1], face.rotation[2]);
+                        diceMesh.add(dot);
+                    });
+                }
+            });
+        }
+
+        function clearDice() {
+            diceObjects.forEach(dice => {
+                if (dice.body) world.remove(dice.body);
+                if (dice.mesh) scene.remove(dice.mesh);
+            });
+            diceObjects = [];
+            diceResults = [];
+        }
+
+        function resetDiceResults() {
+            for (let i = 0; i < 4; i++) {
+                const resultElement = document.getElementById(`dice-result-${i}`);
+                resultElement.textContent = '?';
+                resultElement.classList.add('empty');
+            }
+        }
+
+        function updateDiceResult(index, value) {
+            const resultElement = document.getElementById(`dice-result-${index}`);
+            resultElement.textContent = value;
+            resultElement.classList.remove('empty');
+        }
+
+        function checkDiceSettled() {
+            const checkInterval = setInterval(() => {
+                let allSettled = true;
+                diceObjects.forEach(dice => {
+                    if (dice.body) {
+                        const velocity = dice.body.velocity.length();
+                        const angularVelocity = dice.body.angularVelocity.length();
+                        if (velocity > 0.01 || angularVelocity > 0.01) allSettled = false;
+                    }
+                });
+                
+                if (allSettled) {
+                    clearInterval(checkInterval);
+                    setTimeout(() => { calculateDiceResults(); }, 500);
+                }
+            }, 100);
+        }
+
+        function calculateDiceResults() {
+            diceResults = [];
+            
+            diceObjects.forEach((dice, index) => {
+                const upVector = new THREE.Vector3(0, 1, 0);
+                const faceNormals = [
+                    new THREE.Vector3(1, 0, 0),
+                    new THREE.Vector3(-1, 0, 0),
+                    new THREE.Vector3(0, 1, 0),
+                    new THREE.Vector3(0, -1, 0),
+                    new THREE.Vector3(0, 0, 1),
+                    new THREE.Vector3(0, 0, -1)
+                ];
+                
+                let maxDot = -1;
+                let topFaceIndex = 0;
+                faceNormals.forEach((faceNormal, faceIndex) => {
+                    const rotatedNormal = faceNormal.clone();
+                    rotatedNormal.applyQuaternion(dice.mesh.quaternion);
+                    const dot = upVector.dot(rotatedNormal);
+                    if (dot > maxDot) {
+                        maxDot = dot;
+                        topFaceIndex = faceIndex;
+                    }
+                });
+                
+                const result = dice.mesh.userData.faceValues[topFaceIndex];
+                diceResults.push(result);
+                updateDiceResult(index, result);
+            });
+            
+            setTimeout(() => { generateSymbolFromDice(); }, 1500);
+        }
+
+        function generateSymbolFromDice() {
+            if (diceResults.length !== 4) return;
+            
+            const pattern = diceResults.join('');
+            let symbol = geomancySymbols[pattern];
+            if (!symbol) {
+                const keys = Object.keys(geomancySymbols);
+                symbol = geomancySymbols[keys[0]];
+            }
+            
+            if (isShieldMode) {
+                // シールドチャートモード：シンボルを確定して次へ
+                finalizeSymbol(pattern, symbol);
+            } else {
+                // ワンオラクルモード：結果ダイアログを表示
+                const img = new Image();
+                img.onload = () => {
+                    document.getElementById('symbol-image').src = `${pattern}.png`;
+                    document.getElementById('symbol-name').textContent = symbol.name;
+                    document.getElementById('symbol-yesno').textContent = `Yes/No: ${symbol.yesno}`;
+                    document.getElementById('symbol-fortune').textContent = `吉凶: ${symbol.fortune}`;
+                    document.getElementById('symbol-meaning').textContent = symbol.meaning;
+                    
+                    document.getElementById('symbolDialog').classList.add('show');
+                };
+                img.src = `${pattern}.png`;
+            }
+        }
+
+        function finalizeSymbol(pattern, symbol) {
+            completedSymbols.push(pattern);
+            
+            // シンボルスロットに画像を表示（右から順に）
+            const slotIndex = currentSymbolIndex;
+            const slot = document.getElementById(`symbol-slot-${slotIndex}`);
+            const img = document.createElement('img');
+            img.src = `${pattern}.png`;
+            img.alt = pattern;
+            slot.appendChild(img);
+            
+            // 次のシンボルへ
+            currentSymbolIndex++;
+            
+            if (currentSymbolIndex >= 4) {
+                // 4つすべて完了
+                isRolling = false;
+                return;
+            }
+            
+            // 次のシンボル生成のためにリセット
+            setTimeout(() => {
+                clearDice();
+                createIdleDice();
+                resetDiceResults();
+                updateInstructionText();
+                isRolling = false;
+            }, 1000);
+        }
+
+        function updateInstructionText() {
+            if (!isShieldMode) return;
+            
+            const instructionText = document.getElementById('instruction-text');
+            const goals = ['右', '左', '上', '下'];
+            instructionText.textContent = `目的: ${goals[currentSymbolIndex]} のシンボルを生成しています。画面長押しでダイスを振ります。`;
+        }
+
+        function closeSymbolDialog() {
+            document.getElementById('symbolDialog').classList.remove('show');
+            setTimeout(() => {
+                clearDice();
+                createIdleDice();
+                resetDiceResults();
+                isRolling = false;
+            }, 300);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+            window.scrollTo(0, 0);
+            
+            // シールドチャートモードの場合はシンボルスロットを表示
+            if (isShieldMode) {
+                document.getElementById('symbol-slots').style.display = 'flex';
+                updateInstructionText();
+            }
+            
+            setTimeout(() => { 
+                init3DScene();
+            }, 100);
+        });
+
+        document.addEventListener('touchstart', function() {}, {passive: true});
+    </script>
+</body>
+</html>
