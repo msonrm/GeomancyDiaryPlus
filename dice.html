@@ -908,17 +908,8 @@
                 clearDice();
                 createIdleDice();
                 resetDiceResults();
-                updateInstructionText();
                 isGeneratingSymbol = false; // フラグ解除
             }, 1000);
-        }
-
-        function updateInstructionText() {
-            if (!isShieldMode) return;
-            
-            const instructionText = document.getElementById('instruction-text');
-            const goals = ['右', '左', '上', '下'];
-            instructionText.textContent = `目的: ${goals[currentSymbolIndex]} のシンボルを生成しています。画面をタップしてダイスを振ってください。`;
         }
 
         function closeSymbolDialog() {
@@ -937,10 +928,11 @@
             }
             window.scrollTo(0, 0);
             
-            // シールドチャートモードの場合はシンボルスロットを表示
+            // シールドチャートモードの場合はシンボルスロットを表示し、説明文を変更
             if (isShieldMode) {
                 document.getElementById('symbol-slots').style.display = 'flex';
-                updateInstructionText();
+                const instructionText = document.getElementById('instruction-text');
+                instructionText.textContent = 'どんなことを占いたいのかを強く心に思いながら、あなたのタイミングで画面をタップしてください。4つのエレメント（火・風・水・地）を象徴する4つのダイスが振られ、出た目に応じてジオマンシーのシンボルが決まります。シールドチャートでは、この操作を4回繰り返して4つのシンボルを生成します。';
             }
             
             setTimeout(() => { 
