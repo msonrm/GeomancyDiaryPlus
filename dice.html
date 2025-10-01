@@ -369,6 +369,7 @@
         let diceObjects = [];
         let diceResults = [];
         let clock = null;
+        let isGeneratingSymbol = false; // 結果確定中フラグ
 
         // シールドチャート用の変数
         let completedSymbols = [];
@@ -398,6 +399,7 @@
         }
 
         function handleDiceContainerClick() {
+            if (isGeneratingSymbol) return;
             initDicePhysics();
         }
 
@@ -852,6 +854,9 @@
 
         function generateSymbolFromDice() {
             if (diceResults.length !== 4) return;
+            if (isGeneratingSymbol) return; // 既に結果確定処理中なら何もしない
+            
+            isGeneratingSymbol = true; // 結果確定開始
             
             const pattern = diceResults.join('');
             let symbol = geomancySymbols[pattern];
@@ -904,6 +909,7 @@
                 createIdleDice();
                 resetDiceResults();
                 updateInstructionText();
+                isGeneratingSymbol = false; // フラグ解除
             }, 1000);
         }
 
@@ -921,6 +927,7 @@
                 clearDice();
                 createIdleDice();
                 resetDiceResults();
+                isGeneratingSymbol = false; // フラグ解除
             }, 300);
         }
 
