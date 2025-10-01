@@ -36,23 +36,47 @@
             color: #5d4e37;
         }
 
-        .oracle-links {
+        .divination-groups {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 40px;
+        }
+
+        .divination-group {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .group-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #5d4e37;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .method-buttons {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            justify-content: center;
         }
 
         .oracle-link {
             display: block;
             background: rgba(255,255,255,0.9);
-            padding: 24px;
+            padding: 18px 24px;
             border-radius: 16px;
             text-decoration: none;
             color: #5d4e37;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: 500;
             transition: all 0.3s ease;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            flex: 1;
+            min-width: 0;
         }
 
         .oracle-link:hover {
@@ -66,41 +90,59 @@
                 margin-bottom: 40px;
             }
 
+            .group-title {
+                font-size: 18px;
+            }
+
+            .method-buttons {
+                flex-direction: column;
+            }
+
             .oracle-link {
-                padding: 20px;
-                font-size: 16px;
+                padding: 16px 20px;
+                font-size: 15px;
+            }
+
+            .divination-groups {
+                gap: 32px;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>ジオマンシー<br>ワンオラクル</h1>
+        <h1>ジオマンシー</h1>
         
-        <div class="oracle-links">
-            <a href="dots.html?mode=oneoracle" class="oracle-link">
-                ワンオラクル（ドット）で占う
-            </a>
+        <div class="divination-groups">
+            <div class="divination-group">
+                <h2 class="group-title">ワンオラクル</h2>
+                <div class="method-buttons">
+                    <a href="dots.html?mode=oneoracle" class="oracle-link">
+                        ドット
+                    </a>
+                    <a href="dice.html?mode=oneoracle" class="oracle-link">
+                        ダイス
+                    </a>
+                    <a href="stones.html?mode=oneoracle" class="oracle-link">
+                        ストーン
+                    </a>
+                </div>
+            </div>
             
-            <a href="dots.html?mode=shield" class="oracle-link">
-                シールドチャート（ドット）で占う
-            </a>
-            
-            <a href="dice.html?mode=oneoracle" class="oracle-link">
-                ワンオラクル（ダイス）で占う
-            </a>
-            
-            <a href="dice.html?mode=shield" class="oracle-link">
-                シールドチャート（ダイス）で占う
-            </a>
-            
-            <a href="stones.html?mode=oneoracle" class="oracle-link">
-                ワンオラクル（さざれ石）で占う
-            </a>
-            
-            <a href="stones.html?mode=shield" class="oracle-link">
-                シールドチャート（さざれ石）で占う
-            </a>
+            <div class="divination-group">
+                <h2 class="group-title">シールドチャート</h2>
+                <div class="method-buttons">
+                    <a href="dots.html?mode=shield" class="oracle-link">
+                        ドット
+                    </a>
+                    <a href="dice.html?mode=shield" class="oracle-link">
+                        ダイス
+                    </a>
+                    <a href="stones.html?mode=shield" class="oracle-link">
+                        ストーン
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
 </body>
