@@ -329,32 +329,6 @@
         </div>
     </div>
 
-    <div class="symbol-dialog" id="symbolDialog">
-        <div class="symbol-content">
-            <div class="symbol-header">
-                <h3>ワンオラクル結果</h3>
-                <button class="close-button" onclick="closeSymbolDialog()">×</button>
-            </div>
-            
-            <div class="symbol-image-area">
-                <img class="symbol-image" id="symbol-image" src="" alt="シンボル">
-            </div>
-            
-            <div class="symbol-name" id="symbol-name">
-                Fortuna Minor（小吉）
-            </div>
-            
-            <div class="symbol-attributes">
-                <div class="symbol-attribute" id="symbol-yesno">Yes/No: イエス</div>
-                <div class="symbol-attribute" id="symbol-fortune">吉凶: 小吉</div>
-            </div>
-            
-            <div class="symbol-meaning" id="symbol-meaning">
-                小さく一時的な幸運、ささやかな幸せ。周りからの援助。
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cannon.js/0.6.2/cannon.js"></script>
 
@@ -854,9 +828,9 @@
 
         function generateSymbolFromDice() {
             if (diceResults.length !== 4) return;
-            if (isGeneratingSymbol) return; // 既に結果確定処理中なら何もしない
+            if (isGeneratingSymbol) return;
             
-            isGeneratingSymbol = true; // 結果確定開始
+            isGeneratingSymbol = true;
             
             const pattern = diceResults.join('');
             let symbol = geomancySymbols[pattern];
@@ -869,18 +843,8 @@
                 // シールドチャートモード：シンボルを確定して次へ
                 finalizeSymbol(pattern, symbol);
             } else {
-                // ワンオラクルモード：結果ダイアログを表示
-                const img = new Image();
-                img.onload = () => {
-                    document.getElementById('symbol-image').src = `${pattern}.png`;
-                    document.getElementById('symbol-name').textContent = symbol.name;
-                    document.getElementById('symbol-yesno').textContent = `Yes/No: ${symbol.yesno}`;
-                    document.getElementById('symbol-fortune').textContent = `吉凶: ${symbol.fortune}`;
-                    document.getElementById('symbol-meaning').textContent = symbol.meaning;
-                    
-                    document.getElementById('symbolDialog').classList.add('show');
-                };
-                img.src = `${pattern}.png`;
+                // ワンオラクルモード：結果画面に遷移
+                window.location.href = `one-oracle.html?pattern=${pattern}&method=dice`;
             }
         }
 
@@ -903,7 +867,17 @@
             currentSymbolIndex++;
             
             if (currentSymbolIndex >= 4) {
-                // 4つすべて完了
+                // 4つすべて完了：結果画面に遷移
+                setTimeout(() => {
+                    const params = new URLSearchParams({
+                        m1: completedSymbols[0],
+                        m2: completedSymbols[1],
+                        m3: completedSymbols[2],
+                        m4: completedSymbols[3],
+                        method: 'dice'
+                    });
+                    window.location.href = `shield-chart.html?${params.toString()}`;
+                }, 800);
                 return;
             }
             
@@ -914,16 +888,6 @@
                 resetDiceResults();
                 isGeneratingSymbol = false; // フラグ解除
             }, 1000);
-        }
-
-        function closeSymbolDialog() {
-            document.getElementById('symbolDialog').classList.remove('show');
-            setTimeout(() => {
-                clearDice();
-                createIdleDice();
-                resetDiceResults();
-                isGeneratingSymbol = false; // フラグ解除
-            }, 300);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
