@@ -320,7 +320,8 @@
                         startY: startY,
                         targetX: x,
                         targetY: y,
-                        animProgress: 0
+                        animProgress: 0,
+                        animDelay: Math.random() * 200 // 0〜200msのランダムな遅延
                     };
                     
                     validPosition = true;
@@ -350,12 +351,15 @@
             
             function animate() {
                 const elapsed = Date.now() - startTime;
-                const progress = Math.min(elapsed / duration, 1);
-                
-                // イージング関数（ease-out）
-                const easeProgress = 1 - Math.pow(1 - progress, 3);
                 
                 stones.forEach(stone => {
+                    // 各石の遅延を考慮
+                    const stoneElapsed = Math.max(0, elapsed - stone.animDelay);
+                    const progress = Math.min(stoneElapsed / duration, 1);
+                    
+                    // イージング関数（ease-out）
+                    const easeProgress = 1 - Math.pow(1 - progress, 3);
+                    
                     stone.animProgress = easeProgress;
                     stone.x = stone.startX + (stone.targetX - stone.startX) * easeProgress;
                     stone.y = stone.startY + (stone.targetY - stone.startY) * easeProgress;
@@ -369,7 +373,12 @@
                 
                 redraw();
                 
-                if (progress < 1) {
+                // 全ての石のアニメーションが完了するまで継続
+                const allComplete = stones.every(stone => 
+                    (elapsed - stone.animDelay) >= duration
+                );
+                
+                if (!allComplete) {
                     requestAnimationFrame(animate);
                 } else {
                     // アニメーション完了後、位置を確定
