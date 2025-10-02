@@ -22,7 +22,7 @@
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             width: 100%;
             margin: 0 auto;
             display: flex;
@@ -50,7 +50,7 @@
 
         .result-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
         }
 
         .result-header h1 {
@@ -60,53 +60,66 @@
             margin-bottom: 10px;
         }
 
-        .mothers-section {
-            margin-bottom: 40px;
-        }
-
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #5d4e37;
-            text-align: center;
-            margin-bottom: 24px;
-        }
-
-        .mothers-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 20px;
-        }
-
-        .mother-card {
-            background: rgba(255,255,255,0.5);
-            border-radius: 12px;
-            padding: 16px;
+        .chart-container {
             display: flex;
             flex-direction: column;
-            align-items: center;
             gap: 12px;
+            margin-bottom: 30px;
         }
 
-        .mother-label {
-            font-size: 13px;
-            font-weight: 600;
-            color: #5d4e37;
-            text-align: center;
+        .chart-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .mother-image {
+        .row-8 {
+            gap: 6px;
+        }
+
+        .row-2-special {
+            justify-content: space-around;
+            max-width: 60%;
+            margin: 0 auto;
+        }
+
+        .symbol-card {
+            background: rgba(255,255,255,0.5);
+            border: 2px solid rgba(139,115,85,0.3);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .symbol-card.small {
+            width: 70px;
+            height: 70px;
+        }
+
+        .symbol-card {
+            width: 90px;
+            height: 90px;
+        }
+
+        .symbol-card.large {
+            width: 110px;
+            height: 110px;
+        }
+
+        .symbol-card img {
             width: 100%;
-            max-width: 100px;
-            height: auto;
+            height: 100%;
+            object-fit: contain;
+            padding: 4px;
         }
 
-        .mother-name {
-            font-size: 12px;
-            color: #5d4e37;
-            text-align: center;
-            line-height: 1.4;
+        .symbol-card.filled {
+            border: none;
+            background: transparent;
         }
 
         .action-buttons {
@@ -142,9 +155,23 @@
         }
 
         @media (max-width: 768px) {
-            .mothers-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 12px;
+            .symbol-card.small {
+                width: 50px;
+                height: 50px;
+            }
+
+            .symbol-card {
+                width: 70px;
+                height: 70px;
+            }
+
+            .symbol-card.large {
+                width: 90px;
+                height: 90px;
+            }
+
+            .row-8 {
+                gap: 4px;
             }
         }
 
@@ -153,20 +180,27 @@
                 font-size: 24px;
             }
 
-            .section-title {
-                font-size: 18px;
+            .symbol-card.small {
+                width: 40px;
+                height: 40px;
             }
 
-            .mother-card {
-                padding: 12px;
+            .symbol-card {
+                width: 60px;
+                height: 60px;
             }
 
-            .mother-label {
-                font-size: 12px;
+            .symbol-card.large {
+                width: 75px;
+                height: 75px;
             }
 
-            .mother-name {
-                font-size: 11px;
+            .row-8 {
+                gap: 3px;
+            }
+
+            .chart-row {
+                gap: 6px;
             }
         }
     </style>
@@ -179,29 +213,37 @@
             <h1>シールドチャート結果</h1>
         </div>
 
-        <div class="mothers-section">
-            <div class="section-title">4つの母（Mothers）</div>
-            <div class="mothers-grid">
-                <div class="mother-card">
-                    <div class="mother-label">1の母</div>
-                    <img class="mother-image" id="mother-1-image" src="" alt="1の母">
-                    <div class="mother-name" id="mother-1-name">-</div>
-                </div>
-                <div class="mother-card">
-                    <div class="mother-label">2の母</div>
-                    <img class="mother-image" id="mother-2-image" src="" alt="2の母">
-                    <div class="mother-name" id="mother-2-name">-</div>
-                </div>
-                <div class="mother-card">
-                    <div class="mother-label">3の母</div>
-                    <img class="mother-image" id="mother-3-image" src="" alt="3の母">
-                    <div class="mother-name" id="mother-3-name">-</div>
-                </div>
-                <div class="mother-card">
-                    <div class="mother-label">4の母</div>
-                    <img class="mother-image" id="mother-4-image" src="" alt="4の母">
-                    <div class="mother-name" id="mother-4-name">-</div>
-                </div>
+        <div class="chart-container">
+            <!-- 最上段：母（右）と娘（左） -->
+            <div class="chart-row row-8">
+                <div class="symbol-card small" id="daughter-4"></div>
+                <div class="symbol-card small" id="daughter-3"></div>
+                <div class="symbol-card small" id="daughter-2"></div>
+                <div class="symbol-card small" id="daughter-1"></div>
+                <div class="symbol-card small" id="mother-1"></div>
+                <div class="symbol-card small" id="mother-2"></div>
+                <div class="symbol-card small" id="mother-3"></div>
+                <div class="symbol-card small" id="mother-4"></div>
+            </div>
+
+            <!-- 2段目：姪 -->
+            <div class="chart-row row-4">
+                <div class="symbol-card" id="niece-1"></div>
+                <div class="symbol-card" id="niece-2"></div>
+                <div class="symbol-card" id="niece-3"></div>
+                <div class="symbol-card" id="niece-4"></div>
+            </div>
+
+            <!-- 3段目：証人 -->
+            <div class="chart-row row-2">
+                <div class="symbol-card large" id="witness-1"></div>
+                <div class="symbol-card large" id="witness-2"></div>
+            </div>
+
+            <!-- 4段目：審判と和解者 -->
+            <div class="chart-row row-2-special">
+                <div class="symbol-card large" id="judge"></div>
+                <div class="symbol-card large" id="reconciler"></div>
             </div>
         </div>
 
@@ -212,68 +254,99 @@
     </div>
 
     <script>
-        const geomancySymbols = {
-            '2222': { name: 'Populus（人々）', meaning: '物事や人が多数ある状態。受け身。安定。', yesno: 'イエス', fortune: '吉' },
-            '1111': { name: 'Via（道）', meaning: '変化、動くこと、過程。決断。積極性、能動性。', yesno: 'ノー', fortune: '吉でも凶でもない。旅や移動について吉' },
-            '2112': { name: 'Conjunctio（つながり）', meaning: '違う者同士結びつく、目的を持って集まる、縁が生まれる。失せ物が見つかる。', yesno: 'イエス', fortune: '吉と凶の両方' },
-            '1221': { name: 'Carcer（拘束）', meaning: '孤独、身動きが取れない、ひきこもり。困滞、現状維持。', yesno: 'ノー', fortune: '凶。セキュリティに関しては吉' },
-            '2211': { name: 'Fortuna Major（大吉）', meaning: '大きな幸運。自分の思い通りにことが運ぶ。', yesno: 'イエス', fortune: '大吉' },
-            '1122': { name: 'Fortuna Minor（小吉）', meaning: '小さく一時的な幸運、ささやかな幸せ。周りからの援助。', yesno: 'イエス', fortune: '小吉' },
-            '2121': { name: 'Acquisitio（獲得）', meaning: '収穫、利益。願いが叶う。何かを受け取る、受け入れる。', yesno: 'イエス', fortune: '吉' },
-            '1212': { name: 'Amissio（喪失）', meaning: '損失、愛情や金銭などを失う。病気やトラブル、悪癖がなくなる。', yesno: 'ノー', fortune: '凶' },
-            '1222': { name: 'Laetitia（喜び）', meaning: '喜ばしいこと、笑い、成功。音楽や踊り。髭のある男性。', yesno: 'イエス', fortune: '吉' },
-            '2221': { name: 'Tristitia（悲しみ）', meaning: '不幸、受難、宿命。', yesno: 'ノー', fortune: '凶。占いや魔術に関しては吉' },
-            '1211': { name: 'Puella（少女）', meaning: '女性らしさ、美しさ。ときめき、嬉しさ。目先の楽しみ。', yesno: 'イエス', fortune: '吉' },
-            '1121': { name: 'Puer（少年）', meaning: '男性らしさ、力強さ、未熟さ。未来を切り開く。', yesno: 'ノー', fortune: '凶。争い事には吉' },
-            '2212': { name: 'Albus（白）', meaning: '公正、高潔さ、正義。片思いやプラトニック・ラブ。', yesno: 'イエス', fortune: '吉' },
-            '2122': { name: 'Rubeus（赤）', meaning: '争い事、闘争心。悪いことには吉、良いことには凶。', yesno: 'ノー', fortune: '凶' },
-            '2111': { name: 'Caput Draconis（竜の頭）', meaning: '始まり、新しい扉が開く、前例のない課題に取り組む。やりすぎの傾向。', yesno: 'イエス', fortune: '吉凶入り混じる。何かを始めるには吉' },
-            '1112': { name: 'Cauda Draconis（竜の尾）', meaning: '終わり、物事の完成、途絶。吉は凶となり、凶は吉となる。', yesno: 'ノー', fortune: '吉でも凶でもない。何かを終わらせるには吉' }
-        };
-
         function goBack() {
             window.history.back();
         }
 
         function retryDivination() {
-            // 元の占い方法に戻る（URLパラメータから取得）
             const urlParams = new URLSearchParams(window.location.search);
             const method = urlParams.get('method') || 'dots';
-            window.location.href = `${method}.html?mode=shield`;
+            window.location.href = method + '.html?mode=shield';
         }
 
-        function displayResult() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const mother1 = urlParams.get('m1');
-            const mother2 = urlParams.get('m2');
-            const mother3 = urlParams.get('m3');
-            const mother4 = urlParams.get('m4');
-            const method = urlParams.get('method') || 'dots';
-
-            // パラメータが無効な場合はトップに戻る
-            if (!mother1 || !mother2 || !mother3 || !mother4) {
-                window.location.href = 'index.html';
-                return;
+        // 2つのシンボルを加算（ジオマンシーの算術操作）
+        function addSymbols(pattern1, pattern2) {
+            let result = '';
+            for (let i = 0; i < 4; i++) {
+                const sum = parseInt(pattern1[i]) + parseInt(pattern2[i]);
+                result += (sum % 2 === 0) ? '2' : '1';
             }
+            return result;
+        }
 
-            const mothers = [mother1, mother2, mother3, mother4];
-
-            // 各母シンボルを表示
-            mothers.forEach((pattern, index) => {
-                const motherNum = index + 1;
-                const symbol = geomancySymbols[pattern];
-
-                if (symbol) {
-                    // 画像を表示
-                    document.getElementById(`mother-${motherNum}-image`).src = `${pattern}.png`;
-                    
-                    // シンボル名を表示
-                    document.getElementById(`mother-${motherNum}-name`).textContent = symbol.name;
-                } else {
-                    // 無効なパターンの場合
-                    document.getElementById(`mother-${motherNum}-name`).textContent = '不明なシンボル';
+        // 娘を生成（母を横に読む）
+        function generateDaughters(mothers) {
+            const daughters = [];
+            for (let row = 0; row < 4; row++) {
+                let daughter = '';
+                for (let col = 0; col < 4; col++) {
+                    daughter += mothers[col][row];
                 }
+                daughters.push(daughter);
+            }
+            return daughters;
+        }
+
+        // シンボルカードに画像を表示
+        function displaySymbol(elementId, pattern) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+
+            const img = document.createElement('img');
+            img.src = pattern + '.png';
+            img.alt = pattern;
+            element.appendChild(img);
+            element.classList.add('filled');
+        }
+
+        function calculateAndDisplay() {
+            const urlParams = new URLSearchParams(window.location.search);
+            // デフォルト値を設定（パラメータがない場合のテスト用）
+            const m1 = urlParams.get('m1') || '2211'; // Fortuna Major
+            const m2 = urlParams.get('m2') || '1122'; // Fortuna Minor
+            const m3 = urlParams.get('m3') || '2121'; // Acquisitio
+            const m4 = urlParams.get('m4') || '1212'; // Amissio
+
+            const mothers = [m1, m2, m3, m4];
+
+            // 母を表示
+            mothers.forEach((pattern, index) => {
+                displaySymbol('mother-' + (index + 1), pattern);
             });
+
+            // 娘を生成して表示
+            const daughters = generateDaughters(mothers);
+            daughters.forEach((pattern, index) => {
+                displaySymbol('daughter-' + (index + 1), pattern);
+            });
+
+            // 姪を生成して表示（隣接する母同士を加算）
+            const nieces = [
+                addSymbols(mothers[0], mothers[1]),
+                addSymbols(mothers[1], mothers[2]),
+                addSymbols(mothers[2], mothers[3]),
+                addSymbols(mothers[3], mothers[0])
+            ];
+            nieces.forEach((pattern, index) => {
+                displaySymbol('niece-' + (index + 1), pattern);
+            });
+
+            // 証人を生成して表示
+            const witnesses = [
+                addSymbols(nieces[0], nieces[1]),
+                addSymbols(nieces[2], nieces[3])
+            ];
+            witnesses.forEach((pattern, index) => {
+                displaySymbol('witness-' + (index + 1), pattern);
+            });
+
+            // 審判を生成して表示
+            const judge = addSymbols(witnesses[0], witnesses[1]);
+            displaySymbol('judge', judge);
+
+            // 和解者を生成して表示（審判と第1の母）
+            const reconciler = addSymbols(judge, mothers[0]);
+            displaySymbol('reconciler', reconciler);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -282,7 +355,7 @@
             }
             window.scrollTo(0, 0);
 
-            displayResult();
+            calculateAndDisplay();
         });
     </script>
 </body>
