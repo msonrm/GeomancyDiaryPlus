@@ -227,18 +227,18 @@
                 <div class="symbol-card small" id="mother-1"></div>
             </div>
 
-            <!-- 2段目：姪 -->
+            <!-- 2段目：姪（右から左へ：4, 3, 2, 1） -->
             <div class="chart-row row-4">
-                <div class="symbol-card" id="niece-1"></div>
-                <div class="symbol-card" id="niece-2"></div>
-                <div class="symbol-card" id="niece-3"></div>
                 <div class="symbol-card" id="niece-4"></div>
+                <div class="symbol-card" id="niece-3"></div>
+                <div class="symbol-card" id="niece-2"></div>
+                <div class="symbol-card" id="niece-1"></div>
             </div>
 
-            <!-- 3段目：証人 -->
+            <!-- 3段目：証人（右から左へ：2, 1） -->
             <div class="chart-row row-2">
-                <div class="symbol-card large" id="witness-1"></div>
                 <div class="symbol-card large" id="witness-2"></div>
+                <div class="symbol-card large" id="witness-1"></div>
             </div>
 
             <!-- 4段目：審判と和解者 -->
@@ -265,7 +265,7 @@
             window.location.href = method + '.html?mode=shield';
         }
 
-        // 2つのシンボルを加算（ジオマンシーの算術操作）
+        // 2つのシンボルを加算（排他的論理和）
         function addSymbols(pattern1, pattern2) {
             let result = '';
             for (let i = 0; i < 4; i++) {
@@ -309,7 +309,7 @@
 
             const mothers = [m1, m2, m3, m4];
 
-            // 母を表示（右から左へ：4, 3, 2, 1）
+            // 母を表示
             mothers.forEach((pattern, index) => {
                 displaySymbol('mother-' + (index + 1), pattern);
             });
@@ -320,32 +320,40 @@
                 displaySymbol('daughter-' + (index + 1), pattern);
             });
 
-            // 姪を生成して表示（隣接する母同士を加算）
+            // 姪を生成して表示
+            // 1の姪 = 1の母 XOR 2の母
+            // 2の姪 = 3の母 XOR 4の母
+            // 3の姪 = 1の娘 XOR 2の娘
+            // 4の姪 = 3の娘 XOR 4の娘
             const nieces = [
-                addSymbols(mothers[0], mothers[1]),
-                addSymbols(mothers[1], mothers[2]),
-                addSymbols(mothers[2], mothers[3]),
-                addSymbols(mothers[3], mothers[0])
+                addSymbols(mothers[0], mothers[1]),  // 1の姪
+                addSymbols(mothers[2], mothers[3]),  // 2の姪
+                addSymbols(daughters[0], daughters[1]), // 3の姪
+                addSymbols(daughters[2], daughters[3])  // 4の姪
             ];
             nieces.forEach((pattern, index) => {
                 displaySymbol('niece-' + (index + 1), pattern);
             });
 
             // 証人を生成して表示
+            // 1の証人 = 1の姪 XOR 2の姪
+            // 2の証人 = 3の姪 XOR 4の姪
             const witnesses = [
-                addSymbols(nieces[0], nieces[1]),
-                addSymbols(nieces[2], nieces[3])
+                addSymbols(nieces[0], nieces[1]), // 1の証人
+                addSymbols(nieces[2], nieces[3])  // 2の証人
             ];
             witnesses.forEach((pattern, index) => {
                 displaySymbol('witness-' + (index + 1), pattern);
             });
 
             // 審判を生成して表示
+            // 審判 = 1の証人 XOR 2の証人
             const judge = addSymbols(witnesses[0], witnesses[1]);
             displaySymbol('judge', judge);
 
-            // 和解者を生成して表示（審判と第1の母）
-            const reconciler = addSymbols(judge, mothers[0]);
+            // 和解者を生成して表示
+            // 和解者 = 1の母 XOR 審判
+            const reconciler = addSymbols(mothers[0], judge);
             displaySymbol('reconciler', reconciler);
         }
 
