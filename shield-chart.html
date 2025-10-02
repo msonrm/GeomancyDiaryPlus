@@ -60,79 +60,24 @@
             margin-bottom: 10px;
         }
 
-        .chart-container {
+        .chart-wrapper {
             display: flex;
-            flex-direction: column;
-            gap: 0;
+            justify-content: center;
             margin-bottom: 30px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid #5d4e37;
-            padding: 12px;
-            border-radius: 8px;
         }
 
-        .chart-row {
-            display: flex;
-            justify-content: center;
-            gap: 0;
-            border-bottom: 2px solid #5d4e37;
-        }
-
-        .chart-row:last-child {
-            border-bottom: none;
-        }
-
-        .row-8 {
-            gap: 0;
-        }
-
-        .row-2-special {
-            justify-content: center;
-        }
-
-        .symbol-card {
-            background: transparent;
-            border-right: 2px solid #5d4e37;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
+        .chart-container {
             position: relative;
+            width: 100%;
+            max-width: 600px;
+            aspect-ratio: 1;
         }
 
-        .symbol-card:last-child {
-            border-right: none;
-        }
-
-        .row-2-special .symbol-card {
-            border-right: none;
-        }
-
-        .row-2-special .symbol-card:first-child {
-            border-right: 2px solid #5d4e37;
-        }
-
-        .symbol-card.small {
-            width: 70px;
-            height: 70px;
-        }
-
-        .symbol-card {
-            width: 90px;
-            height: 90px;
-        }
-
-        .symbol-card.large {
-            width: 110px;
-            height: 110px;
-        }
-
-        .symbol-card img {
+        #shieldCanvas {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            padding: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
         }
 
         .action-buttons {
@@ -167,41 +112,9 @@
             color: #5d4e37;
         }
 
-        @media (max-width: 768px) {
-            .symbol-card.small {
-                width: 50px;
-                height: 50px;
-            }
-
-            .symbol-card {
-                width: 70px;
-                height: 70px;
-            }
-
-            .symbol-card.large {
-                width: 90px;
-                height: 90px;
-            }
-        }
-
         @media (max-width: 480px) {
             .result-header h1 {
                 font-size: 24px;
-            }
-
-            .symbol-card.small {
-                width: 40px;
-                height: 40px;
-            }
-
-            .symbol-card {
-                width: 60px;
-                height: 60px;
-            }
-
-            .symbol-card.large {
-                width: 75px;
-                height: 75px;
             }
         }
     </style>
@@ -214,37 +127,9 @@
             <h1>シールドチャート結果</h1>
         </div>
 
-        <div class="chart-container">
-            <!-- 最上段：娘（左）と母（右） -->
-            <div class="chart-row row-8">
-                <div class="symbol-card small" id="daughter-4"></div>
-                <div class="symbol-card small" id="daughter-3"></div>
-                <div class="symbol-card small" id="daughter-2"></div>
-                <div class="symbol-card small" id="daughter-1"></div>
-                <div class="symbol-card small" id="mother-4"></div>
-                <div class="symbol-card small" id="mother-3"></div>
-                <div class="symbol-card small" id="mother-2"></div>
-                <div class="symbol-card small" id="mother-1"></div>
-            </div>
-
-            <!-- 2段目：姪（右から左へ：4, 3, 2, 1） -->
-            <div class="chart-row row-4">
-                <div class="symbol-card" id="niece-4"></div>
-                <div class="symbol-card" id="niece-3"></div>
-                <div class="symbol-card" id="niece-2"></div>
-                <div class="symbol-card" id="niece-1"></div>
-            </div>
-
-            <!-- 3段目：証人（右から左へ：2, 1） -->
-            <div class="chart-row row-2">
-                <div class="symbol-card large" id="witness-2"></div>
-                <div class="symbol-card large" id="witness-1"></div>
-            </div>
-
-            <!-- 4段目：審判と和解者 -->
-            <div class="chart-row row-2-special">
-                <div class="symbol-card large" id="judge"></div>
-                <div class="symbol-card large" id="reconciler"></div>
+        <div class="chart-wrapper">
+            <div class="chart-container">
+                <canvas id="shieldCanvas"></canvas>
             </div>
         </div>
 
@@ -255,6 +140,16 @@
     </div>
 
     <script>
+        const CANVAS_SIZE = 800;
+        let canvas, ctx;
+        let symbolImages = {};
+        let mothers = [];
+        let daughters = [];
+        let nieces = [];
+        let witnesses = [];
+        let judge = '';
+        let reconciler = '';
+
         function goBack() {
             window.history.back();
         }
@@ -265,7 +160,6 @@
             window.location.href = method + '.html?mode=shield';
         }
 
-        // 2つのシンボルを加算（排他的論理和）
         function addSymbols(pattern1, pattern2) {
             let result = '';
             for (let i = 0; i < 4; i++) {
@@ -275,7 +169,6 @@
             return result;
         }
 
-        // 娘を生成（母を横に読む）
         function generateDaughters(mothers) {
             const daughters = [];
             for (let row = 0; row < 4; row++) {
@@ -288,73 +181,162 @@
             return daughters;
         }
 
-        // シンボルカードに画像を表示
-        function displaySymbol(elementId, pattern) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-
-            const img = document.createElement('img');
-            img.src = pattern + '.png';
-            img.alt = pattern;
-            element.appendChild(img);
+        function loadImage(pattern) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = pattern + '.png';
+            });
         }
 
-        function calculateAndDisplay() {
+        async function loadAllImages(patterns) {
+            const uniquePatterns = [...new Set(patterns)];
+            const promises = uniquePatterns.map(async (pattern) => {
+                symbolImages[pattern] = await loadImage(pattern);
+            });
+            await Promise.all(promises);
+        }
+
+        function initCanvas() {
+            canvas = document.getElementById('shieldCanvas');
+            ctx = canvas.getContext('2d');
+            canvas.width = CANVAS_SIZE;
+            canvas.height = CANVAS_SIZE;
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = '#5d4e37';
+            ctx.lineWidth = 2;
+
+            ctx.strokeRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+
+            const rowHeights = [
+                CANVAS_SIZE * 0.25,
+                CANVAS_SIZE * 0.50,
+                CANVAS_SIZE * 0.75,
+                CANVAS_SIZE
+            ];
+
+            for (let i = 0; i < rowHeights.length - 1; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, rowHeights[i]);
+                ctx.lineTo(CANVAS_SIZE, rowHeights[i]);
+                ctx.stroke();
+            }
+
+            const topColWidth = CANVAS_SIZE / 8;
+            for (let i = 1; i < 8; i++) {
+                ctx.beginPath();
+                ctx.moveTo(topColWidth * i, 0);
+                ctx.lineTo(topColWidth * i, rowHeights[0]);
+                ctx.stroke();
+            }
+
+            const midColWidth = CANVAS_SIZE / 4;
+            for (let i = 1; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(midColWidth * i, rowHeights[0]);
+                ctx.lineTo(midColWidth * i, rowHeights[1]);
+                ctx.stroke();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(CANVAS_SIZE / 2, rowHeights[1]);
+            ctx.lineTo(CANVAS_SIZE / 2, rowHeights[2]);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(CANVAS_SIZE / 2, rowHeights[2]);
+            ctx.lineTo(CANVAS_SIZE / 2, rowHeights[3]);
+            ctx.stroke();
+        }
+
+        function drawSymbol(pattern, x, y, size) {
+            const img = symbolImages[pattern];
+            if (img) {
+                ctx.drawImage(img, x, y, size, size);
+            }
+        }
+
+        function drawShieldChart() {
+            ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
+            drawGrid();
+
+            const cellSize = CANVAS_SIZE / 8;
+            const padding = cellSize * 0.1;
+            const symbolSize = cellSize - padding * 2;
+
+            for (let i = 0; i < 4; i++) {
+                const x = cellSize * i + padding;
+                const y = padding;
+                drawSymbol(daughters[3 - i], x, y, symbolSize);
+            }
+
+            for (let i = 0; i < 4; i++) {
+                const x = cellSize * (4 + i) + padding;
+                const y = padding;
+                drawSymbol(mothers[3 - i], x, y, symbolSize);
+            }
+
+            const row2Size = CANVAS_SIZE / 4;
+            const row2SymbolSize = row2Size - padding * 2;
+            for (let i = 0; i < 4; i++) {
+                const x = row2Size * i + padding;
+                const y = CANVAS_SIZE * 0.25 + padding;
+                drawSymbol(nieces[3 - i], x, y, row2SymbolSize);
+            }
+
+            const row3Size = CANVAS_SIZE / 2;
+            const row3SymbolSize = row3Size - padding * 2;
+            for (let i = 0; i < 2; i++) {
+                const x = row3Size * i + padding;
+                const y = CANVAS_SIZE * 0.50 + padding;
+                drawSymbol(witnesses[1 - i], x, y, row3SymbolSize);
+            }
+
+            const row4Size = CANVAS_SIZE / 2;
+            const row4SymbolSize = row4Size - padding * 2;
+            drawSymbol(judge, padding, CANVAS_SIZE * 0.75 + padding, row4SymbolSize);
+            drawSymbol(reconciler, row4Size + padding, CANVAS_SIZE * 0.75 + padding, row4SymbolSize);
+        }
+
+        async function calculateAndDisplay() {
             const urlParams = new URLSearchParams(window.location.search);
-            // デフォルト値を設定（パラメータがない場合のテスト用）
-            const m1 = urlParams.get('m1') || '2211'; // Fortuna Major
-            const m2 = urlParams.get('m2') || '1122'; // Fortuna Minor
-            const m3 = urlParams.get('m3') || '2121'; // Acquisitio
-            const m4 = urlParams.get('m4') || '1212'; // Amissio
+            const m1 = urlParams.get('m1') || '2211';
+            const m2 = urlParams.get('m2') || '1122';
+            const m3 = urlParams.get('m3') || '2121';
+            const m4 = urlParams.get('m4') || '1212';
 
-            const mothers = [m1, m2, m3, m4];
+            mothers = [m1, m2, m3, m4];
+            daughters = generateDaughters(mothers);
 
-            // 母を表示
-            mothers.forEach((pattern, index) => {
-                displaySymbol('mother-' + (index + 1), pattern);
-            });
-
-            // 娘を生成して表示
-            const daughters = generateDaughters(mothers);
-            daughters.forEach((pattern, index) => {
-                displaySymbol('daughter-' + (index + 1), pattern);
-            });
-
-            // 姪を生成して表示
-            // 1の姪 = 1の母 XOR 2の母
-            // 2の姪 = 3の母 XOR 4の母
-            // 3の姪 = 1の娘 XOR 2の娘
-            // 4の姪 = 3の娘 XOR 4の娘
-            const nieces = [
-                addSymbols(mothers[0], mothers[1]),  // 1の姪
-                addSymbols(mothers[2], mothers[3]),  // 2の姪
-                addSymbols(daughters[0], daughters[1]), // 3の姪
-                addSymbols(daughters[2], daughters[3])  // 4の姪
+            nieces = [
+                addSymbols(mothers[0], mothers[1]),
+                addSymbols(mothers[2], mothers[3]),
+                addSymbols(daughters[0], daughters[1]),
+                addSymbols(daughters[2], daughters[3])
             ];
-            nieces.forEach((pattern, index) => {
-                displaySymbol('niece-' + (index + 1), pattern);
-            });
 
-            // 証人を生成して表示
-            // 1の証人 = 1の姪 XOR 2の姪
-            // 2の証人 = 3の姪 XOR 4の姪
-            const witnesses = [
-                addSymbols(nieces[0], nieces[1]), // 1の証人
-                addSymbols(nieces[2], nieces[3])  // 2の証人
+            witnesses = [
+                addSymbols(nieces[0], nieces[1]),
+                addSymbols(nieces[2], nieces[3])
             ];
-            witnesses.forEach((pattern, index) => {
-                displaySymbol('witness-' + (index + 1), pattern);
-            });
 
-            // 審判を生成して表示
-            // 審判 = 1の証人 XOR 2の証人
-            const judge = addSymbols(witnesses[0], witnesses[1]);
-            displaySymbol('judge', judge);
+            judge = addSymbols(witnesses[0], witnesses[1]);
+            reconciler = addSymbols(mothers[0], judge);
 
-            // 和解者を生成して表示
-            // 和解者 = 1の母 XOR 審判
-            const reconciler = addSymbols(mothers[0], judge);
-            displaySymbol('reconciler', reconciler);
+            const allPatterns = [
+                ...mothers,
+                ...daughters,
+                ...nieces,
+                ...witnesses,
+                judge,
+                reconciler
+            ];
+
+            await loadAllImages(allPatterns);
+            drawShieldChart();
         }
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -363,6 +345,7 @@
             }
             window.scrollTo(0, 0);
 
+            initCanvas();
             calculateAndDisplay();
         });
     </script>
