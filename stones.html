@@ -54,7 +54,7 @@
             max-width: 600px;
             margin: 0 auto;
             position: relative;
-            background: #1a1a2e;
+            background: #3d3d5c;
             border-radius: 12px;
             touch-action: none;
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
@@ -290,13 +290,28 @@
                     const y = EDGE_MARGIN + Math.random() * (canvas.height - EDGE_MARGIN * 2);
                     const radius = STONE_BASE_RADIUS * (0.8 + Math.random() * 0.4);
                     const color = stoneColors[Math.floor(Math.random() * stoneColors.length)];
-                    const polygon = generateIrregularPolygon(x, y, radius);
                     
-                    newStone = { x, y, radius, color, polygon };
+                    // 石の形状を最初に生成（相対座標）
+                    const basePolygon = generateIrregularPolygon(0, 0, radius);
+                    
+                    newStone = { 
+                        x, 
+                        y, 
+                        radius, 
+                        color, 
+                        basePolygon: basePolygon, // 基準形状（相対座標）
+                        polygon: null, // 描画用（絶対座標）
+                        // アニメーション用の初期位置と目標位置
+                        startX: x + (Math.random() - 0.5) * 100,
+                        startY: y + (Math.random() - 0.5) * 100,
+                        targetX: x,
+                        targetY: y,
+                        animProgress: 0
+                    };
                     
                     validPosition = true;
                     for (let j = 0; j < stones.length; j++) {
-                        const distance = Math.hypot(newStone.x - stones[j].x, newStone.y - stones[j].y);
+                        const distance = Math.hypot(newStone.targetX - stones[j].targetX, newStone.targetY - stones[j].targetY);
                         if (distance < MIN_DISTANCE) {
                             validPosition = false;
                             break;
@@ -310,21 +325,71 @@
                     stones.push(newStone);
                 }
             }
+            
+            // 石を混ぜるアニメーション
+            animateStonesMixing();
+        }
+
+        function animateStonesMixing() {
+            const duration = 800; // ミリ秒
+            const startTime = Date.now();
+            
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // イージング関数（ease-out）
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+                
+                stones.forEach(stone => {
+                    stone.animProgress = easeProgress;
+                    stone.x = stone.startX + (stone.targetX - stone.startX) * easeProgress;
+                    stone.y = stone.startY + (stone.targetY - stone.startY) * easeProgress;
+                    
+                    // 基準形状から現在位置の絶対座標を計算
+                    stone.polygon = stone.basePolygon.map(point => ({
+                        x: point.x + stone.x,
+                        y: point.y + stone.y
+                    }));
+                });
+                
+                redraw();
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // アニメーション完了後、位置を確定
+                    stones.forEach(stone => {
+                        stone.x = stone.targetX;
+                        stone.y = stone.targetY;
+                        stone.polygon = stone.basePolygon.map(point => ({
+                            x: point.x + stone.x,
+                            y: point.y + stone.y
+                        }));
+                    });
+                    redraw();
+                }
+            }
+            
+            animate();
         }
 
         function drawStone(stone, glow = false) {
             ctx.save();
             
-            // グロー効果（輝き）
             if (glow) {
+                // グロー効果（輝き）- 残った石用
                 ctx.shadowColor = '#fff';
                 ctx.shadowBlur = 20;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
             } else {
-                ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
-                ctx.shadowBlur = 8;
+                // 通常の影 - 実在感を出す
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
             }
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
             
             // 多角形を描画
             ctx.beginPath();
@@ -355,13 +420,17 @@
             ctx.fillStyle = gradient;
             ctx.fill();
             
-            // 輪郭線（薄く）
+            // 輪郭線
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
             ctx.strokeStyle = lightenColor(baseColor, 20);
             ctx.lineWidth = 0.5;
             ctx.stroke();
             
             // 追加のグロー効果（輝く石用）
             if (glow) {
+                ctx.shadowColor = '#fff';
                 ctx.shadowBlur = 30;
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
                 ctx.lineWidth = 2;
@@ -397,11 +466,11 @@
             });
             
             if (currentPath.length > 0) {
-                ctx.strokeStyle = '#00d4ff';
+                ctx.strokeStyle = '#fff8e1';
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
-                ctx.shadowColor = '#00d4ff';
+                ctx.shadowColor = '#fff8e1';
                 ctx.shadowBlur = 10;
                 ctx.beginPath();
                 ctx.moveTo(currentPath[0].x, currentPath[0].y);
@@ -417,7 +486,7 @@
                     const distance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
                     
                     if (distance < CLOSE_THRESHOLD) {
-                        ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+                        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
                         ctx.shadowBlur = 0;
                         ctx.beginPath();
                         ctx.moveTo(currentPath[0].x, currentPath[0].y);
@@ -427,8 +496,8 @@
                         ctx.closePath();
                         ctx.fill();
                         
-                        ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
-                        ctx.shadowColor = '#00d4ff';
+                        ctx.strokeStyle = 'rgba(255, 248, 225, 0.7)';
+                        ctx.shadowColor = '#fff8e1';
                         ctx.shadowBlur = 8;
                         ctx.setLineDash([5, 5]);
                         ctx.beginPath();
@@ -444,7 +513,7 @@
             if (currentRoundResult && currentRoundResult.path) {
                 const path = currentRoundResult.path;
                 
-                ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
                 ctx.shadowBlur = 0;
                 ctx.beginPath();
                 ctx.moveTo(path[0].x, path[0].y);
@@ -454,8 +523,8 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                ctx.strokeStyle = '#00d4ff';
-                ctx.shadowColor = '#00d4ff';
+                ctx.strokeStyle = '#fff8e1';
+                ctx.shadowColor = '#fff8e1';
                 ctx.shadowBlur = 10;
                 ctx.lineWidth = 3;
                 ctx.stroke();
@@ -668,9 +737,9 @@
                 const stone1 = sortedStones[pairIndex * 2];
                 const stone2 = sortedStones[pairIndex * 2 + 1];
                 
-                ctx.strokeStyle = '#00d4ff';
-                ctx.shadowColor = '#00d4ff';
-                ctx.shadowBlur = 5;
+                ctx.strokeStyle = '#b8a8d8';
+                ctx.shadowColor = '#b8a8d8';
+                ctx.shadowBlur = 3;
                 ctx.lineWidth = 2;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
