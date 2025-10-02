@@ -54,9 +54,10 @@
             max-width: 600px;
             margin: 0 auto;
             position: relative;
-            background: rgba(255,255,255,0.3);
+            background: #1a1a2e;
             border-radius: 12px;
             touch-action: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
 
         #stones-canvas {
@@ -208,7 +209,6 @@
                     </div>
                 </div>
                 
-                <!-- シールドチャート用のシンボル表示欄 -->
                 <div class="symbol-slots" id="symbol-slots" style="display: none;">
                     <div class="symbol-slot" id="symbol-slot-0"></div>
                     <div class="symbol-slot" id="symbol-slot-1"></div>
@@ -220,7 +220,6 @@
     </div>
 
     <script>
-        // URLパラメータからモードを取得
         const urlParams = new URLSearchParams(window.location.search);
         const mode = urlParams.get('mode') || 'oneoracle';
         const isShieldMode = mode === 'shield';
@@ -234,33 +233,19 @@
         let completedRounds = [];
         let currentRoundResult = null;
         
-        // シールドチャート用の変数
-        let completedSymbols = []; // 確定したシンボルの配列
-        let currentSymbolIndex = 0; // 現在生成中のシンボル（0-3）
+        let completedSymbols = [];
+        let currentSymbolIndex = 0;
         
-        const STONE_RADIUS = 4;
+        const STONE_BASE_RADIUS = 8;
         const STONE_COUNT = 50;
         const CLOSE_THRESHOLD = 30;
         const MIN_PATH_LENGTH = 20;
 
-        const geomancySymbols = {
-            '2222': { name: 'Populus（人々）', meaning: '物事や人が多数ある状態。受け身。安定。', yesno: 'イエス', fortune: '吉' },
-            '1111': { name: 'Via（道）', meaning: '変化、動くこと、過程。決断。積極性、能動性。', yesno: 'ノー', fortune: '吉でも凶でもない。旅や移動について吉' },
-            '2112': { name: 'Conjunctio（つながり）', meaning: '違う者同士結びつく、目的を持って集まる、縁が生まれる。失せ物が見つかる。', yesno: 'イエス', fortune: '吉と凶の両方' },
-            '1221': { name: 'Carcer（拘束）', meaning: '孤独、身動きが取れない、ひきこもり。困滞、現状維持。', yesno: 'ノー', fortune: '凶。セキュリティに関しては吉' },
-            '2211': { name: 'Fortuna Major（大吉）', meaning: '大きな幸運。自分の思い通りにことが運ぶ。', yesno: 'イエス', fortune: '大吉' },
-            '1122': { name: 'Fortuna Minor（小吉）', meaning: '小さく一時的な幸運、ささやかな幸せ。周りからの援助。', yesno: 'イエス', fortune: '小吉' },
-            '2121': { name: 'Acquisitio（獲得）', meaning: '収穫、利益。願いが叶う。何かを受け取る、受け入れる。', yesno: 'イエス', fortune: '吉' },
-            '1212': { name: 'Amissio（喪失）', meaning: '損失、愛情や金銭などを失う。病気やトラブル、悪癖がなくなる。', yesno: 'ノー', fortune: '凶' },
-            '1222': { name: 'Laetitia（喜び）', meaning: '喜ばしいこと、笑い、成功。音楽や踊り。髭のある男性。', yesno: 'イエス', fortune: '吉' },
-            '2221': { name: 'Tristitia（悲しみ）', meaning: '不幸、受難、宿命。', yesno: 'ノー', fortune: '凶。占いや魔術に関しては吉' },
-            '1211': { name: 'Puella（少女）', meaning: '女性らしさ、美しさ。ときめき、嬉しさ。目先の楽しみ。', yesno: 'イエス', fortune: '吉' },
-            '1121': { name: 'Puer（少年）', meaning: '男性らしさ、力強さ、未熟さ。未来を切り開く。', yesno: 'ノー', fortune: '凶。争い事には吉' },
-            '2212': { name: 'Albus（白）', meaning: '公正、高潔さ、正義。片思いやプラトニック・ラブ。', yesno: 'イエス', fortune: '吉' },
-            '2122': { name: 'Rubeus（赤）', meaning: '争い事、闘争心。悪いことには吉、良いことには凶。', yesno: 'ノー', fortune: '凶' },
-            '2111': { name: 'Caput Draconis（竜の頭）', meaning: '始まり、新しい扉が開く、前例のない課題に取り組む。やりすぎの傾向。', yesno: 'イエス', fortune: '吉凶入り混じる。何かを始めるには吉' },
-            '1112': { name: 'Cauda Draconis（竜の尾）', meaning: '終わり、物事の完成、途絶。吉は凶となり、凶は吉となる。', yesno: 'ノー', fortune: '吉でも凶でもない。何かを終わらせるには吉' }
-        };
+        // 石の色パレット（水晶のような色合い）
+        const stoneColors = [
+            '#e8d5f2', '#d4c5f9', '#c8b6ff', '#dfd3ff',
+            '#f0e6ff', '#e6d9ff', '#cfc2e8', '#d8cce8'
+        ];
 
         function goBack() {
             window.history.back();
@@ -272,9 +257,26 @@
             canvas.height = container.clientHeight;
         }
 
+        // 不規則な多角形の頂点を生成
+        function generateIrregularPolygon(centerX, centerY, baseRadius) {
+            const sides = 6 + Math.floor(Math.random() * 5); // 6-10角形
+            const points = [];
+            const angleStep = (Math.PI * 2) / sides;
+            
+            for (let i = 0; i < sides; i++) {
+                const angle = angleStep * i + (Math.random() - 0.5) * 0.3;
+                const radiusVariation = baseRadius * (0.8 + Math.random() * 0.4);
+                const x = centerX + Math.cos(angle) * radiusVariation;
+                const y = centerY + Math.sin(angle) * radiusVariation;
+                points.push({ x, y });
+            }
+            
+            return points;
+        }
+
         function initStones() {
             stones = [];
-            const MIN_DISTANCE = STONE_RADIUS * 5;
+            const MIN_DISTANCE = STONE_BASE_RADIUS * 5;
             const EDGE_MARGIN = 20;
             const MAX_ATTEMPTS = 50;
             
@@ -284,10 +286,13 @@
                 let validPosition = false;
                 
                 while (!validPosition && attempts < MAX_ATTEMPTS) {
-                    newStone = {
-                        x: EDGE_MARGIN + Math.random() * (canvas.width - EDGE_MARGIN * 2),
-                        y: EDGE_MARGIN + Math.random() * (canvas.height - EDGE_MARGIN * 2)
-                    };
+                    const x = EDGE_MARGIN + Math.random() * (canvas.width - EDGE_MARGIN * 2);
+                    const y = EDGE_MARGIN + Math.random() * (canvas.height - EDGE_MARGIN * 2);
+                    const radius = STONE_BASE_RADIUS * (0.8 + Math.random() * 0.4);
+                    const color = stoneColors[Math.floor(Math.random() * stoneColors.length)];
+                    const polygon = generateIrregularPolygon(x, y, radius);
+                    
+                    newStone = { x, y, radius, color, polygon };
                     
                     validPosition = true;
                     for (let j = 0; j < stones.length; j++) {
@@ -307,27 +312,104 @@
             }
         }
 
+        function drawStone(stone, glow = false) {
+            ctx.save();
+            
+            // グロー効果（輝き）
+            if (glow) {
+                ctx.shadowColor = '#fff';
+                ctx.shadowBlur = 20;
+            } else {
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+                ctx.shadowBlur = 8;
+            }
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+            
+            // 多角形を描画
+            ctx.beginPath();
+            ctx.moveTo(stone.polygon[0].x, stone.polygon[0].y);
+            for (let i = 1; i < stone.polygon.length; i++) {
+                ctx.lineTo(stone.polygon[i].x, stone.polygon[i].y);
+            }
+            ctx.closePath();
+            
+            // グラデーションで立体感と輝きを出す
+            const gradient = ctx.createRadialGradient(
+                stone.x - stone.radius * 0.3, 
+                stone.y - stone.radius * 0.3, 
+                0,
+                stone.x, 
+                stone.y, 
+                stone.radius * 1.5
+            );
+            
+            const baseColor = stone.color;
+            const lighterColor = glow ? '#ffffff' : lightenColor(baseColor, 40);
+            const darkerColor = darkenColor(baseColor, 10);
+            
+            gradient.addColorStop(0, lighterColor);
+            gradient.addColorStop(0.5, baseColor);
+            gradient.addColorStop(1, darkerColor);
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // 輪郭線（薄く）
+            ctx.strokeStyle = lightenColor(baseColor, 20);
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+            
+            // 追加のグロー効果（輝く石用）
+            if (glow) {
+                ctx.shadowBlur = 30;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
+        function lightenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, ((num >> 16) & 0xff) + amt);
+            const G = Math.min(255, ((num >> 8) & 0xff) + amt);
+            const B = Math.min(255, (num & 0xff) + amt);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        function darkenColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, ((num >> 16) & 0xff) - amt);
+            const G = Math.max(0, ((num >> 8) & 0xff) - amt);
+            const B = Math.max(0, (num & 0xff) - amt);
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
         function redraw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             stones.forEach(stone => {
-                ctx.fillStyle = '#8b7355';
-                ctx.beginPath();
-                ctx.arc(stone.x, stone.y, STONE_RADIUS, 0, Math.PI * 2);
-                ctx.fill();
+                drawStone(stone);
             });
             
             if (currentPath.length > 0) {
-                ctx.strokeStyle = '#5d4e37';
-                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#00d4ff';
+                ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
                 ctx.lineJoin = 'round';
+                ctx.shadowColor = '#00d4ff';
+                ctx.shadowBlur = 10;
                 ctx.beginPath();
                 ctx.moveTo(currentPath[0].x, currentPath[0].y);
                 for (let i = 1; i < currentPath.length; i++) {
                     ctx.lineTo(currentPath[i].x, currentPath[i].y);
                 }
                 ctx.stroke();
+                ctx.shadowBlur = 0;
                 
                 if (currentPath.length > MIN_PATH_LENGTH) {
                     const startPoint = currentPath[0];
@@ -335,7 +417,8 @@
                     const distance = Math.hypot(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
                     
                     if (distance < CLOSE_THRESHOLD) {
-                        ctx.fillStyle = 'rgba(139,115,85,0.08)';
+                        ctx.fillStyle = 'rgba(0, 212, 255, 0.1)';
+                        ctx.shadowBlur = 0;
                         ctx.beginPath();
                         ctx.moveTo(currentPath[0].x, currentPath[0].y);
                         for (let i = 1; i < currentPath.length; i++) {
@@ -344,13 +427,16 @@
                         ctx.closePath();
                         ctx.fill();
                         
-                        ctx.strokeStyle = 'rgba(139,115,85,0.5)';
+                        ctx.strokeStyle = 'rgba(0, 212, 255, 0.6)';
+                        ctx.shadowColor = '#00d4ff';
+                        ctx.shadowBlur = 8;
                         ctx.setLineDash([5, 5]);
                         ctx.beginPath();
                         ctx.moveTo(endPoint.x, endPoint.y);
                         ctx.lineTo(startPoint.x, startPoint.y);
                         ctx.stroke();
                         ctx.setLineDash([]);
+                        ctx.shadowBlur = 0;
                     }
                 }
             }
@@ -358,7 +444,8 @@
             if (currentRoundResult && currentRoundResult.path) {
                 const path = currentRoundResult.path;
                 
-                ctx.fillStyle = 'rgba(139,115,85,0.15)';
+                ctx.fillStyle = 'rgba(0, 212, 255, 0.15)';
+                ctx.shadowBlur = 0;
                 ctx.beginPath();
                 ctx.moveTo(path[0].x, path[0].y);
                 for (let i = 1; i < path.length; i++) {
@@ -367,9 +454,12 @@
                 ctx.closePath();
                 ctx.fill();
                 
-                ctx.strokeStyle = '#8b7355';
+                ctx.strokeStyle = '#00d4ff';
+                ctx.shadowColor = '#00d4ff';
+                ctx.shadowBlur = 10;
                 ctx.lineWidth = 3;
                 ctx.stroke();
+                ctx.shadowBlur = 0;
             }
         }
 
@@ -538,10 +628,8 @@
                 if (completedRounds.length === 4) {
                     setTimeout(() => {
                         if (isShieldMode) {
-                            // シールドチャートモード：シンボルを確定して次へ
                             finalizeSymbol();
                         } else {
-                            // ワンオラクルモード：結果画面に遷移
                             const pattern = completedRounds.join('');
                             window.location.href = `one-oracle.html?pattern=${pattern}&method=stones`;
                         }
@@ -566,13 +654,11 @@
             
             function drawNextPair() {
                 if (pairIndex >= totalPairs) {
-                    // ペアリング完了後、残った石を金色で強調
                     const remainingStones = sortedStones.slice(totalPairs * 2);
+                    
+                    // 残った石を輝かせる
                     remainingStones.forEach(stone => {
-                        ctx.fillStyle = '#f39c12';
-                        ctx.beginPath();
-                        ctx.arc(stone.x, stone.y, STONE_RADIUS * 1.8, 0, Math.PI * 2);
-                        ctx.fill();
+                        drawStone(stone, true);
                     });
                     
                     if (callback) setTimeout(callback, 300);
@@ -582,13 +668,16 @@
                 const stone1 = sortedStones[pairIndex * 2];
                 const stone2 = sortedStones[pairIndex * 2 + 1];
                 
-                ctx.strokeStyle = '#8b7355';
+                ctx.strokeStyle = '#00d4ff';
+                ctx.shadowColor = '#00d4ff';
+                ctx.shadowBlur = 5;
                 ctx.lineWidth = 2;
                 ctx.lineCap = 'round';
                 ctx.beginPath();
                 ctx.moveTo(stone1.x, stone1.y);
                 ctx.lineTo(stone2.x, stone2.y);
                 ctx.stroke();
+                ctx.shadowBlur = 0;
                 
                 pairIndex++;
                 setTimeout(drawNextPair, 100);
@@ -647,7 +736,6 @@
             const pattern = completedRounds.join('');
             completedSymbols.push(pattern);
             
-            // シンボルスロットに画像を表示（右から順に：3, 2, 1, 0）
             const slotIndex = 3 - currentSymbolIndex;
             const slot = document.getElementById(`symbol-slot-${slotIndex}`);
             const img = document.createElement('img');
@@ -655,15 +743,12 @@
             img.alt = pattern;
             slot.appendChild(img);
             
-            // 枠線と背景色を削除
             slot.style.border = 'none';
             slot.style.background = 'transparent';
             
-            // 次のシンボルへ
             currentSymbolIndex++;
             
             if (currentSymbolIndex >= 4) {
-                // 4つすべて完了：結果画面に遷移
                 setTimeout(() => {
                     const params = new URLSearchParams({
                         m1: completedSymbols[0],
@@ -677,7 +762,6 @@
                 return;
             }
             
-            // 次のシンボル生成のためにリセット
             setTimeout(() => {
                 completedRounds = [];
                 currentPath = [];
@@ -706,7 +790,6 @@
             }
             window.scrollTo(0, 0);
             
-            // シールドチャートモードの場合はシンボルスロットを表示し、説明文を変更
             if (isShieldMode) {
                 document.getElementById('symbol-slots').style.display = 'flex';
                 const instructionText = document.getElementById('instruction-text');
