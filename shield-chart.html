@@ -246,16 +246,34 @@
             ctx.lineTo(CANVAS_SIZE / 2, rowHeights[2]);
             ctx.stroke();
 
+            // 4段目：中央に縦線、右側にもう一本縦線
+            const row4Left = CANVAS_SIZE / 4;
+            const row4Center = CANVAS_SIZE / 2;
+            const row4Right = CANVAS_SIZE * 3 / 4;
+            
             ctx.beginPath();
-            ctx.moveTo(CANVAS_SIZE / 2, rowHeights[2]);
-            ctx.lineTo(CANVAS_SIZE / 2, rowHeights[3]);
+            ctx.moveTo(row4Left, rowHeights[2]);
+            ctx.lineTo(row4Left, rowHeights[3]);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(row4Center, rowHeights[2]);
+            ctx.lineTo(row4Center, rowHeights[3]);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(row4Right, rowHeights[2]);
+            ctx.lineTo(row4Right, rowHeights[3]);
             ctx.stroke();
         }
 
-        function drawSymbol(pattern, x, y, size) {
+        function drawSymbol(pattern, x, y, width, height) {
             const img = symbolImages[pattern];
             if (img) {
-                ctx.drawImage(img, x, y, size, size);
+                const size = Math.min(width, height) * 0.7;
+                const centerX = x + (width - size) / 2;
+                const centerY = y + (height - size) / 2;
+                ctx.drawImage(img, centerX, centerY, size, size);
             }
         }
 
@@ -263,42 +281,45 @@
             ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE);
             drawGrid();
 
-            const cellSize = CANVAS_SIZE / 8;
-            const padding = cellSize * 0.1;
-            const symbolSize = cellSize - padding * 2;
+            const cellWidth = CANVAS_SIZE / 8;
+            const row1Height = CANVAS_SIZE * 0.25;
 
             for (let i = 0; i < 4; i++) {
-                const x = cellSize * i + padding;
-                const y = padding;
-                drawSymbol(daughters[3 - i], x, y, symbolSize);
+                const x = cellWidth * i;
+                drawSymbol(daughters[3 - i], x, 0, cellWidth, row1Height);
             }
 
             for (let i = 0; i < 4; i++) {
-                const x = cellSize * (4 + i) + padding;
-                const y = padding;
-                drawSymbol(mothers[3 - i], x, y, symbolSize);
+                const x = cellWidth * (4 + i);
+                drawSymbol(mothers[3 - i], x, 0, cellWidth, row1Height);
             }
 
-            const row2Size = CANVAS_SIZE / 4;
-            const row2SymbolSize = row2Size - padding * 2;
+            const row2Width = CANVAS_SIZE / 4;
+            const row2Height = CANVAS_SIZE * 0.25;
             for (let i = 0; i < 4; i++) {
-                const x = row2Size * i + padding;
-                const y = CANVAS_SIZE * 0.25 + padding;
-                drawSymbol(nieces[3 - i], x, y, row2SymbolSize);
+                const x = row2Width * i;
+                const y = CANVAS_SIZE * 0.25;
+                drawSymbol(nieces[3 - i], x, y, row2Width, row2Height);
             }
 
-            const row3Size = CANVAS_SIZE / 2;
-            const row3SymbolSize = row3Size - padding * 2;
+            const row3Width = CANVAS_SIZE / 2;
+            const row3Height = CANVAS_SIZE * 0.25;
             for (let i = 0; i < 2; i++) {
-                const x = row3Size * i + padding;
-                const y = CANVAS_SIZE * 0.50 + padding;
-                drawSymbol(witnesses[1 - i], x, y, row3SymbolSize);
+                const x = row3Width * i;
+                const y = CANVAS_SIZE * 0.50;
+                drawSymbol(witnesses[1 - i], x, y, row3Width, row3Height);
             }
 
-            const row4Size = CANVAS_SIZE / 2;
-            const row4SymbolSize = row4Size - padding * 2;
-            drawSymbol(judge, padding, CANVAS_SIZE * 0.75 + padding, row4SymbolSize);
-            drawSymbol(reconciler, row4Size + padding, CANVAS_SIZE * 0.75 + padding, row4SymbolSize);
+            // 4段目：審判（中央の枠）と和解者（右の枠）
+            const row4Height = CANVAS_SIZE * 0.25;
+            const judgeX = CANVAS_SIZE / 4;
+            const judgeWidth = CANVAS_SIZE / 4;
+            const reconcilerX = CANVAS_SIZE / 2;
+            const reconcilerWidth = CANVAS_SIZE / 4;
+            const y4 = CANVAS_SIZE * 0.75;
+            
+            drawSymbol(judge, judgeX, y4, judgeWidth, row4Height);
+            drawSymbol(reconciler, reconcilerX, y4, reconcilerWidth, row4Height);
         }
 
         async function calculateAndDisplay() {
