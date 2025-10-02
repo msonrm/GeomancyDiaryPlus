@@ -255,14 +255,14 @@
             ctx.stroke();
         }
 
-        // 統一されたサイズでシンボルを描画（縦横比3:2を保つ）
+        // 統一されたサイズでシンボルを描画（縦横比3:2 = 横:縦）
         function drawSymbol(pattern, cellX, cellY, cellWidth, cellHeight) {
             const img = symbolImages[pattern];
             if (!img) return;
 
             // 基準サイズ：1段目の枠幅（CANVAS_SIZE / 8）を画像幅の基準とする
             const baseWidth = CANVAS_SIZE / 8 * 0.8; // 80%使用
-            const baseHeight = baseWidth * 2 / 3; // 縦横比3:2
+            const baseHeight = baseWidth * 3 / 2; // 縦横比3:2（横:縦）
 
             // セルの中央に配置
             const x = cellX + (cellWidth - baseWidth) / 2;
@@ -308,13 +308,12 @@
                 drawSymbol(witnesses[1 - i], x, y, row3Width, row3Height);
             }
 
-            // 4段目：審判（全体の中央）と和解者（右1/4の枠内）
+            // 4段目：審判（外枠全体の中央）と和解者（右1/4の枠内）
             const row4Height = CANVAS_SIZE * 0.25;
             const y4 = CANVAS_SIZE * 0.75;
             
-            // 審判：左3/4の領域の中央に配置
-            const judgeAreaWidth = CANVAS_SIZE * 3 / 4;
-            drawSymbol(judge, 0, y4, judgeAreaWidth, row4Height);
+            // 審判：外枠全体（CANVAS_SIZE）の中央に配置
+            drawSymbol(judge, 0, y4, CANVAS_SIZE, row4Height);
             
             // 和解者：右1/4の枠内
             const reconcilerX = CANVAS_SIZE * 3 / 4;
