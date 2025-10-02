@@ -294,6 +294,20 @@
                     // 石の形状を最初に生成（相対座標）
                     const basePolygon = generateIrregularPolygon(0, 0, radius);
                     
+                    // キャンバスの中心座標
+                    const centerX = canvas.width / 2;
+                    const centerY = canvas.height / 2;
+                    
+                    // 最終位置から中心とは逆方向のベクトルを計算（外側から中心に向かう）
+                    const dx = x - centerX;
+                    const dy = y - centerY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // 50〜150pxのランダムな距離
+                    const moveDistance = 50 + Math.random() * 100;
+                    const startX = x + (dx / distance) * moveDistance;
+                    const startY = y + (dy / distance) * moveDistance;
+                    
                     newStone = { 
                         x, 
                         y, 
@@ -302,8 +316,8 @@
                         basePolygon: basePolygon, // 基準形状（相対座標）
                         polygon: null, // 描画用（絶対座標）
                         // アニメーション用の初期位置と目標位置
-                        startX: x + (Math.random() - 0.5) * 100,
-                        startY: y + (Math.random() - 0.5) * 100,
+                        startX: startX,
+                        startY: startY,
                         targetX: x,
                         targetY: y,
                         animProgress: 0
