@@ -63,36 +63,54 @@
         .chart-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0;
             margin-bottom: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid #5d4e37;
+            padding: 12px;
+            border-radius: 8px;
         }
 
         .chart-row {
             display: flex;
             justify-content: center;
-            gap: 8px;
+            gap: 0;
+            border-bottom: 2px solid #5d4e37;
+        }
+
+        .chart-row:last-child {
+            border-bottom: none;
         }
 
         .row-8 {
-            gap: 6px;
+            gap: 0;
         }
 
         .row-2-special {
-            justify-content: space-around;
-            max-width: 60%;
-            margin: 0 auto;
+            justify-content: center;
         }
 
         .symbol-card {
-            background: rgba(255,255,255,0.5);
-            border: 2px solid rgba(139,115,85,0.3);
-            border-radius: 8px;
+            background: transparent;
+            border-right: 2px solid #5d4e37;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             overflow: hidden;
             position: relative;
+        }
+
+        .symbol-card:last-child {
+            border-right: none;
+        }
+
+        .row-2-special .symbol-card {
+            border-right: none;
+        }
+
+        .row-2-special .symbol-card:first-child {
+            border-right: 2px solid #5d4e37;
         }
 
         .symbol-card.small {
@@ -115,11 +133,6 @@
             height: 100%;
             object-fit: contain;
             padding: 4px;
-        }
-
-        .symbol-card.filled {
-            border: none;
-            background: transparent;
         }
 
         .action-buttons {
@@ -169,10 +182,6 @@
                 width: 90px;
                 height: 90px;
             }
-
-            .row-8 {
-                gap: 4px;
-            }
         }
 
         @media (max-width: 480px) {
@@ -193,14 +202,6 @@
             .symbol-card.large {
                 width: 75px;
                 height: 75px;
-            }
-
-            .row-8 {
-                gap: 3px;
-            }
-
-            .chart-row {
-                gap: 6px;
             }
         }
     </style>
@@ -296,7 +297,6 @@
             img.src = pattern + '.png';
             img.alt = pattern;
             element.appendChild(img);
-            element.classList.add('filled');
         }
 
         function calculateAndDisplay() {
