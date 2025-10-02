@@ -246,20 +246,8 @@
             ctx.lineTo(CANVAS_SIZE / 2, rowHeights[2]);
             ctx.stroke();
 
-            // 4段目：中央に縦線、右側にもう一本縦線
-            const row4Left = CANVAS_SIZE / 4;
-            const row4Center = CANVAS_SIZE / 2;
+            // 4段目：右側1/4だけ区切る
             const row4Right = CANVAS_SIZE * 3 / 4;
-            
-            ctx.beginPath();
-            ctx.moveTo(row4Left, rowHeights[2]);
-            ctx.lineTo(row4Left, rowHeights[3]);
-            ctx.stroke();
-            
-            ctx.beginPath();
-            ctx.moveTo(row4Center, rowHeights[2]);
-            ctx.lineTo(row4Center, rowHeights[3]);
-            ctx.stroke();
             
             ctx.beginPath();
             ctx.moveTo(row4Right, rowHeights[2]);
@@ -267,14 +255,20 @@
             ctx.stroke();
         }
 
-        function drawSymbol(pattern, x, y, width, height) {
+        // 統一されたサイズでシンボルを描画（縦横比3:2を保つ）
+        function drawSymbol(pattern, cellX, cellY, cellWidth, cellHeight) {
             const img = symbolImages[pattern];
-            if (img) {
-                const size = Math.min(width, height) * 0.7;
-                const centerX = x + (width - size) / 2;
-                const centerY = y + (height - size) / 2;
-                ctx.drawImage(img, centerX, centerY, size, size);
-            }
+            if (!img) return;
+
+            // 基準サイズ：1段目の枠幅（CANVAS_SIZE / 8）を画像幅の基準とする
+            const baseWidth = CANVAS_SIZE / 8 * 0.8; // 80%使用
+            const baseHeight = baseWidth * 2 / 3; // 縦横比3:2
+
+            // セルの中央に配置
+            const x = cellX + (cellWidth - baseWidth) / 2;
+            const y = cellY + (cellHeight - baseHeight) / 2;
+
+            ctx.drawImage(img, x, y, baseWidth, baseHeight);
         }
 
         function drawShieldChart() {
@@ -284,16 +278,19 @@
             const cellWidth = CANVAS_SIZE / 8;
             const row1Height = CANVAS_SIZE * 0.25;
 
+            // 最上段：娘（左4つ）
             for (let i = 0; i < 4; i++) {
                 const x = cellWidth * i;
                 drawSymbol(daughters[3 - i], x, 0, cellWidth, row1Height);
             }
 
+            // 最上段：母（右4つ）
             for (let i = 0; i < 4; i++) {
                 const x = cellWidth * (4 + i);
                 drawSymbol(mothers[3 - i], x, 0, cellWidth, row1Height);
             }
 
+            // 2段目：姪
             const row2Width = CANVAS_SIZE / 4;
             const row2Height = CANVAS_SIZE * 0.25;
             for (let i = 0; i < 4; i++) {
@@ -302,6 +299,7 @@
                 drawSymbol(nieces[3 - i], x, y, row2Width, row2Height);
             }
 
+            // 3段目：証人
             const row3Width = CANVAS_SIZE / 2;
             const row3Height = CANVAS_SIZE * 0.25;
             for (let i = 0; i < 2; i++) {
@@ -310,15 +308,17 @@
                 drawSymbol(witnesses[1 - i], x, y, row3Width, row3Height);
             }
 
-            // 4段目：審判（中央の枠）と和解者（右の枠）
+            // 4段目：審判（全体の中央）と和解者（右1/4の枠内）
             const row4Height = CANVAS_SIZE * 0.25;
-            const judgeX = CANVAS_SIZE / 4;
-            const judgeWidth = CANVAS_SIZE / 4;
-            const reconcilerX = CANVAS_SIZE / 2;
-            const reconcilerWidth = CANVAS_SIZE / 4;
             const y4 = CANVAS_SIZE * 0.75;
             
-            drawSymbol(judge, judgeX, y4, judgeWidth, row4Height);
+            // 審判：左3/4の領域の中央に配置
+            const judgeAreaWidth = CANVAS_SIZE * 3 / 4;
+            drawSymbol(judge, 0, y4, judgeAreaWidth, row4Height);
+            
+            // 和解者：右1/4の枠内
+            const reconcilerX = CANVAS_SIZE * 3 / 4;
+            const reconcilerWidth = CANVAS_SIZE / 4;
             drawSymbol(reconciler, reconcilerX, y4, reconcilerWidth, row4Height);
         }
 
